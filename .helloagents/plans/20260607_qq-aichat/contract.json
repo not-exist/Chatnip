@@ -1,0 +1,20 @@
+{
+  "verifyMode": "review-first",
+  "reviewerFocus": [
+    "AI prompt 模板设计是否合理、维度描述是否清晰",
+    "NapCat API 调用参数和错误处理是否完整",
+    "opencode SDK 调用是否正确处理 session 生命周期",
+    "Redux 状态结构是否合理、是否存在不必要的全局状态",
+    "HeroUI 组件使用是否符合最佳实践、主题是否对齐 NapCat",
+    "多轮追问在 opencode session 中的消息顺序是否正确"
+  ],
+  "testerFocus": [
+    "全流程：设置配置 → 选择会话 → 拉取消息 → 分析 → 追问 → 历史管理",
+    "NapCat 连接失败时的错误提示",
+    "opencode 未启动时的错误提示",
+    "消息拉取为空时的处理",
+    "分析过程中网络中断的恢复",
+    "暗色/亮色主题切换",
+    "会话删除确认和撤销"
+  ]
+}
