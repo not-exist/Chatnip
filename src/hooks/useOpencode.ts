@@ -1,5 +1,4 @@
 import { useCallback } from 'react'
-import { useAppSelector } from '@/store'
 import * as opencodeApi from '@/api/opencode'
 import { registerSession, unregisterSession, getRegisteredSessions, updateSessionTitle } from '@/store/sessionRegistry'
 import type { ChatType, SessionInfo } from '@/types'
@@ -13,12 +12,10 @@ interface CreateSessionParams {
 }
 
 export function useOpencode() {
-  const config = useAppSelector((s) => s.settings.opencode)
-
   const createSession = useCallback(
     async (params: CreateSessionParams) => {
-      const session = await opencodeApi.createSession(config, params.title)
-      await opencodeApi.updateSessionTitle(config, session.id, params.title)
+      const session = await opencodeApi.createSession(params.title)
+      await opencodeApi.updateSessionTitle(session.id, params.title)
       registerSession({
         id: session.id,
         title: params.title,
@@ -30,19 +27,19 @@ export function useOpencode() {
       })
       return session
     },
-    [config],
+    [],
   )
 
   const deleteSession = useCallback(
     async (id: string) => {
-      await opencodeApi.deleteSession(config, id)
+      await opencodeApi.deleteSession(id)
       unregisterSession(id)
     },
-    [config],
+    [],
   )
 
   const listSessions = useCallback(async (): Promise<SessionInfo[]> => {
-    const remoteSessions = (await opencodeApi.listSessions(config)) ?? []
+    const remoteSessions = (await opencodeApi.listSessions()) ?? []
     const registry = getRegisteredSessions()
     const remoteMap = new Map(remoteSessions.map((s) => [s.id, s]))
     return Object.values(registry)
@@ -59,21 +56,21 @@ export function useOpencode() {
           features: r.features,
         }
       })
-  }, [config])
+  }, [])
 
   const getMessages = useCallback(
-    (id: string) => opencodeApi.getSessionMessages(config, id),
-    [config],
+    (id: string) => opencodeApi.getSessionMessages(id),
+    [],
   )
 
   const sendPrompt = useCallback(
-    (sessionId: string, text: string) => opencodeApi.sendPrompt(config, sessionId, text),
-    [config],
+    (sessionId: string, text: string) => opencodeApi.sendPrompt(sessionId, text),
+    [],
   )
 
   const testConnection = useCallback(
-    () => opencodeApi.testOpencodeConnection(config),
-    [config],
+    () => opencodeApi.testOpencodeConnection(),
+    [],
   )
 
   return { createSession, deleteSession, listSessions, getMessages, sendPrompt, testConnection }

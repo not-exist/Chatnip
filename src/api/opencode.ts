@@ -1,45 +1,41 @@
-import type { OpencodeConfig } from '@/types'
+const PROXY_BASE = '/api/opencode'
 
 let sdkPromise: ReturnType<typeof import('@opencode-ai/sdk/client').createOpencodeClient> | null = null
 
-async function getClient(config: OpencodeConfig) {
+async function getClient() {
   if (sdkPromise) return sdkPromise
   const { createOpencodeClient } = await import('@opencode-ai/sdk/client')
   sdkPromise = createOpencodeClient({
-    baseUrl: `http://${config.host}:${config.port}`,
+    baseUrl: PROXY_BASE,
   })
   return sdkPromise
 }
 
-export async function createSession(config: OpencodeConfig, title: string) {
-  const client = await getClient(config)
+export async function createSession(title: string) {
+  const client = await getClient()
   const result = await client.session.create({ body: { title } })
   return result.data!
 }
 
-export async function deleteSession(config: OpencodeConfig, id: string) {
-  const client = await getClient(config)
+export async function deleteSession(id: string) {
+  const client = await getClient()
   await client.session.delete({ path: { id } })
 }
 
-export async function listSessions(config: OpencodeConfig) {
-  const client = await getClient(config)
+export async function listSessions() {
+  const client = await getClient()
   const result = await client.session.list()
   return result.data ?? []
 }
 
-export async function getSessionMessages(config: OpencodeConfig, id: string) {
-  const client = await getClient(config)
+export async function getSessionMessages(id: string) {
+  const client = await getClient()
   const result = await client.session.messages({ path: { id } })
   return result.data ?? []
 }
 
-export async function sendPrompt(
-  config: OpencodeConfig,
-  sessionId: string,
-  text: string,
-) {
-  const client = await getClient(config)
+export async function sendPrompt(sessionId: string, text: string) {
+  const client = await getClient()
   const result = await client.session.prompt({
     path: { id: sessionId },
     body: {
@@ -49,18 +45,14 @@ export async function sendPrompt(
   return result.data!
 }
 
-export async function updateSessionTitle(
-  config: OpencodeConfig,
-  id: string,
-  title: string,
-) {
-  const client = await getClient(config)
+export async function updateSessionTitle(id: string, title: string) {
+  const client = await getClient()
   await client.session.update({ path: { id }, body: { title } })
 }
 
-export async function testOpencodeConnection(config: OpencodeConfig): Promise<boolean> {
+export async function testOpencodeConnection(): Promise<boolean> {
   try {
-    const client = await getClient(config)
+    const client = await getClient()
     await client.session.list()
     return true
   } catch {

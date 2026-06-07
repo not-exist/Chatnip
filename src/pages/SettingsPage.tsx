@@ -31,7 +31,7 @@ export default function SettingsPage() {
   }
 
   const handleTestOpencode = async () => {
-    const ok = await testOpencodeConnection(opencode)
+    const ok = await testOpencodeConnection()
     if (ok) {
       toast.success('Opencode 连接成功')
     } else {
@@ -82,7 +82,7 @@ export default function SettingsPage() {
         <Divider />
         <CardBody className="space-y-4">
           <p className="text-sm text-default-500">
-            需要先执行 <code className="bg-default-100 px-1 rounded">opencode serve</code> 启动服务
+            opencode serve 随 Vite 自动启动，通过代理连接（端口 4096）
           </p>
           <div className="grid grid-cols-2 gap-4">
             <Input
