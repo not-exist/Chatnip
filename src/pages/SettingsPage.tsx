@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { Card, CardBody, CardHeader } from '@heroui/card'
 import { Input } from '@heroui/input'
 import { Button } from '@heroui/button'
@@ -20,6 +21,19 @@ export default function SettingsPage() {
   const { napcat, opencode, defaultMessageCount, defaultFeatures } = useAppSelector(
     (s) => s.settings,
   )
+  const napcatRef = useRef(napcat)
+  napcatRef.current = napcat
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetch('/__api/napcat-config', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ host: napcat.host, port: napcat.port }),
+      }).catch(() => {})
+    }, 800)
+    return () => clearTimeout(timer)
+  }, [napcat.host, napcat.port])
 
   const handleTestNapcat = async () => {
     const ok = await testNapcat(napcat)
