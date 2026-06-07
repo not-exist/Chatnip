@@ -70,7 +70,13 @@ export default function NewAnalysisPage() {
 
       setStatus('正在创建分析会话...')
 
-      const session = await createSession(`分析: ${chatName}`)
+      const session = await createSession({
+        title: `分析: ${chatName}`,
+        chatType,
+        chatId,
+        chatName,
+        features,
+      })
       const sessionId = session.id
 
       setStatus('正在进行 AI 分析，请耐心等待...')
@@ -112,7 +118,7 @@ export default function NewAnalysisPage() {
         <h1 className="text-2xl font-bold">分析配置</h1>
       </div>
 
-      <Card>
+      <Card className="card-enhanced">
         <CardHeader>
           <h2 className="text-lg font-semibold">会话信息</h2>
         </CardHeader>
@@ -124,7 +130,7 @@ export default function NewAnalysisPage() {
         </CardBody>
       </Card>
 
-      <Card>
+      <Card className="card-enhanced">
         <CardHeader>
           <h2 className="text-lg font-semibold">分析参数</h2>
         </CardHeader>

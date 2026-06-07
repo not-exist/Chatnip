@@ -3,3 +3,5 @@ dist/
 .vite/
 *.local
 .env
+.playwright-mcp/
+app-running.png

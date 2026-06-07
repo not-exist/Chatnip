@@ -20,7 +20,7 @@ export default function SessionCard({ session, onView, onDelete }: SessionCardPr
   const date = new Date(session.createdAt).toLocaleString('zh-CN')
 
   return (
-    <Card className="w-full">
+    <Card className="w-full card-enhanced">
       <CardHeader className="flex flex-col items-start gap-2">
         <div className="flex items-center justify-between w-full">
           <h3 className="font-semibold text-lg truncate flex-1 mr-4">{session.title}</h3>

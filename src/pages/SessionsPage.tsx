@@ -20,16 +20,7 @@ export default function SessionsPage() {
     setLoading(true)
     try {
       const result = await listSessions()
-      const mapped: SessionInfo[] = (result || []).map((s) => ({
-        id: s.id,
-        title: s.title || '未命名分析',
-        createdAt: s.time?.created || Date.now(),
-        chatType: 'group',
-        chatId: 0,
-        chatName: s.title || '',
-        features: [],
-      }))
-      setSessions(mapped)
+      setSessions(result || [])
     } catch {
       toast.error('无法获取会话列表，请检查 opencode 连接')
     } finally {
@@ -101,7 +92,7 @@ export default function SessionsPage() {
           <SessionCard
             key={session.id}
             session={session}
-            onView={() => navigate(`/sessions/${session.id}`)}
+            onView={() => navigate(`/sessions/${session.id}`, { state: { chatName: session.chatName } })}
             onDelete={() => handleDelete(session.id)}
           />
         ))}

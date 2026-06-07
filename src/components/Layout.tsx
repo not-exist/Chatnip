@@ -17,8 +17,8 @@ export default function Layout() {
   const location = useLocation()
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar maxWidth="xl" position="sticky">
+    <div className="min-h-screen app-bg">
+      <Navbar maxWidth="xl" position="sticky" className="nav-glass">
         <NavbarBrand>
           <Link to="/chats" className="flex items-center gap-2">
             <span className="text-xl font-bold text-primary">QQ AI Chat</span>

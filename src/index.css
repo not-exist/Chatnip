@@ -5,3 +5,28 @@
 .prose {
   max-width: none;
 }
+
+.app-bg {
+  background: linear-gradient(135deg, #faf9fb 0%, #fdf2f7 30%, #f8f6fa 60%, #faf9fb 100%);
+  background-attachment: fixed;
+}
+
+.card-enhanced {
+  @apply border border-default-100/60 shadow-sm;
+  backdrop-filter: blur(4px);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card-enhanced:hover {
+  @apply border-default-200 shadow-md;
+}
+
+.nav-glass {
+  backdrop-filter: saturate(180%) blur(12px);
+  @apply bg-background/70 border-b border-default-100/50;
+}
+
+.dark .app-bg {
+  background: linear-gradient(135deg, #110b14 0%, #1a0f1f 30%, #130e18 60%, #110b14 100%);
+  background-attachment: fixed;
+}

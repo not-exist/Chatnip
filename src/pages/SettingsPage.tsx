@@ -41,7 +41,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="card-enhanced">
         <CardHeader>
           <h2 className="text-xl font-semibold">NapCat 连接配置</h2>
         </CardHeader>
@@ -75,7 +75,7 @@ export default function SettingsPage() {
         </CardBody>
       </Card>
 
-      <Card>
+      <Card className="card-enhanced">
         <CardHeader>
           <h2 className="text-xl font-semibold">Opencode 连接配置</h2>
         </CardHeader>
@@ -105,7 +105,7 @@ export default function SettingsPage() {
         </CardBody>
       </Card>
 
-      <Card>
+      <Card className="card-enhanced">
         <CardHeader>
           <h2 className="text-xl font-semibold">默认分析设置</h2>
         </CardHeader>
