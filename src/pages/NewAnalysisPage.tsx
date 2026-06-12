@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { Card, CardBody, CardHeader } from '@heroui/card'
 import { Button } from '@heroui/button'
