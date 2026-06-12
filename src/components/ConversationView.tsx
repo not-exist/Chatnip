@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Card, CardBody } from '@heroui/card'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface Message {
   role: 'user' | 'assistant' | 'system'
@@ -42,8 +44,14 @@ export default function ConversationView({ messages }: ConversationViewProps) {
                 prose-p:my-1
                 prose-code:bg-default-200 prose-code:px-1 prose-code:rounded
                 prose-code:before:content-none prose-code:after:content-none
+                prose-table:border-collapse prose-table:w-full
+                prose-th:border prose-th:border-default-300 prose-th:bg-default-100 prose-th:px-3 prose-th:py-2
+                prose-td:border prose-td:border-default-300 prose-td:px-3 prose-td:py-2
+                prose-blockquote:border-l-primary prose-blockquote:bg-default-50 prose-blockquote:py-1 prose-blockquote:px-4
               ">
-                <ReactMarkdown>{msg.content}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {msg.content}
+                </ReactMarkdown>
               </div>
             </CardBody>
           </Card>
@@ -53,5 +61,3 @@ export default function ConversationView({ messages }: ConversationViewProps) {
     </div>
   )
 }
-
-import ReactMarkdown from 'react-markdown'

@@ -35,12 +35,14 @@ export async function getGroupMsgHistory(
   config: NapCatConfig,
   groupId: number,
   count: number,
+  messageSeq?: number,
 ): Promise<NapCatMessageHistory> {
   const client = createClient(config)
-  const { data } = await client.post('/get_group_msg_history', {
-    group_id: groupId,
-    count,
-  })
+  const body: Record<string, unknown> = { group_id: groupId, count }
+  if (messageSeq !== undefined) {
+    body.message_seq = messageSeq
+  }
+  const { data } = await client.post('/get_group_msg_history', body)
   return data.data ?? { messages: [] }
 }
 
@@ -48,13 +50,14 @@ export async function getFriendMsgHistory(
   config: NapCatConfig,
   userId: number,
   count: number,
+  messageSeq?: number,
 ): Promise<NapCatMessageHistory> {
   const client = createClient(config)
-  const { data } = await client.post('/get_friend_msg_history', {
-    user_id: userId,
-    count,
-    message_seq: '0',
-  })
+  const body: Record<string, unknown> = { user_id: userId, count }
+  if (messageSeq !== undefined) {
+    body.message_seq = messageSeq
+  }
+  const { data } = await client.post('/get_friend_msg_history', body)
   return data.data ?? { messages: [] }
 }
 

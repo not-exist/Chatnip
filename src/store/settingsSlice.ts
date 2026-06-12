@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
-import type { SettingsState } from '@/types'
+import type { SettingsState, ModelInfo } from '@/types'
 
 const defaultNapcatConfig = {
   host: '127.0.0.1',
@@ -24,6 +24,7 @@ function loadSettings(): SettingsState {
     opencode: defaultOpencodeConfig,
     defaultMessageCount: 200,
     defaultFeatures: ['summary', 'topics', 'sentiment'],
+    defaultModel: undefined,
   }
 }
 
@@ -53,6 +54,10 @@ const settingsSlice = createSlice({
       state.defaultFeatures = action.payload
       persist(state)
     },
+    setDefaultModel(state, action: PayloadAction<ModelInfo | undefined>) {
+      state.defaultModel = action.payload
+      persist(state)
+    },
   },
 })
 
@@ -61,6 +66,7 @@ export const {
   setOpencodeConfig,
   setDefaultMessageCount,
   setDefaultFeatures,
+  setDefaultModel,
 } = settingsSlice.actions
 
 export default settingsSlice.reducer

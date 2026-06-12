@@ -149,11 +149,11 @@ export function buildUserPrompt(params: {
   chatName: string
   messageCount: number
   features: string[]
-  earliestTime: string
-  latestTime: string
+  dateFrom: string
+  dateTo: string
   formattedMessages: string
 }): string {
-  const { chatType, chatName, messageCount, features, earliestTime, latestTime, formattedMessages } = params
+  const { chatType, chatName, messageCount, features, dateFrom, dateTo, formattedMessages } = params
   const typeLabel = chatType === 'group' ? '群聊' : '私聊'
   const featureList = getFeatureLabels(features)
 
@@ -161,7 +161,7 @@ export function buildUserPrompt(params: {
 - 类型：${typeLabel}
 - 名称：${chatName}
 - 消息条数：${messageCount} 条
-- 时间范围：${earliestTime} ~ ${latestTime}
+- 日期范围：${dateFrom} ~ ${dateTo}
 
 ## 需要分析的维度
 ${featureList}

@@ -9,11 +9,24 @@ export interface OpencodeConfig {
   port: number
 }
 
+export interface ModelInfo {
+  providerID: string
+  modelID: string
+  name: string
+}
+
+export interface ProviderInfo {
+  id: string
+  name: string
+  models: Record<string, { id: string; name: string }>
+}
+
 export interface SettingsState {
   napcat: NapCatConfig
   opencode: OpencodeConfig
   defaultMessageCount: number
   defaultFeatures: string[]
+  defaultModel?: ModelInfo
 }
 
 export interface GroupInfo {

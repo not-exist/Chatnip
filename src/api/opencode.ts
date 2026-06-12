@@ -1,3 +1,5 @@
+import type { ProviderInfo, ModelInfo } from '@/types'
+
 const PROXY_BASE = '/api/opencode'
 
 let sdkPromise: ReturnType<typeof import('@opencode-ai/sdk/client').createOpencodeClient> | null = null
@@ -28,18 +30,36 @@ export async function listSessions() {
   return result.data ?? []
 }
 
+export async function listProviders(): Promise<ProviderInfo[]> {
+  const client = await getClient()
+  const result = await client.provider.list()
+  if (result.data?.all) {
+    return result.data.all.map((p) => ({
+      id: p.id,
+      name: p.name,
+      models: p.models,
+    }))
+  }
+  return []
+}
+
 export async function getSessionMessages(id: string) {
   const client = await getClient()
   const result = await client.session.messages({ path: { id } })
   return result.data ?? []
 }
 
-export async function sendPrompt(sessionId: string, text: string) {
+export async function sendPrompt(
+  sessionId: string,
+  text: string,
+  model?: ModelInfo,
+) {
   const client = await getClient()
   const result = await client.session.prompt({
     path: { id: sessionId },
     body: {
       parts: [{ type: 'text' as const, text }],
+      ...(model ? { model: { providerID: model.providerID, modelID: model.modelID } } : {}),
     },
   })
   return result.data!

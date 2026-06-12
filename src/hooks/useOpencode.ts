@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import * as opencodeApi from '@/api/opencode'
 import { registerSession, unregisterSession, getRegisteredSessions, updateSessionTitle } from '@/store/sessionRegistry'
-import type { ChatType, SessionInfo } from '@/types'
+import type { ChatType, SessionInfo, ModelInfo } from '@/types'
 
 interface CreateSessionParams {
   title: string
@@ -64,7 +64,13 @@ export function useOpencode() {
   )
 
   const sendPrompt = useCallback(
-    (sessionId: string, text: string) => opencodeApi.sendPrompt(sessionId, text),
+    (sessionId: string, text: string, model?: ModelInfo) =>
+      opencodeApi.sendPrompt(sessionId, text, model),
+    [],
+  )
+
+  const listProviders = useCallback(
+    () => opencodeApi.listProviders(),
     [],
   )
 
@@ -73,5 +79,5 @@ export function useOpencode() {
     [],
   )
 
-  return { createSession, deleteSession, listSessions, getMessages, sendPrompt, testConnection }
+  return { createSession, deleteSession, listSessions, getMessages, sendPrompt, listProviders, testConnection }
 }

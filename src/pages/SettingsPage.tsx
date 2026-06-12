@@ -1,28 +1,35 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Card, CardBody, CardHeader } from '@heroui/card'
 import { Input } from '@heroui/input'
 import { Button } from '@heroui/button'
 import { Divider } from '@heroui/divider'
-import { Slider } from '@heroui/slider'
+import { Select, SelectItem } from '@heroui/select'
+import { Spinner } from '@heroui/spinner'
 import toast from 'react-hot-toast'
 import { useAppSelector, useAppDispatch } from '@/store'
 import {
   setNapcatConfig,
   setOpencodeConfig,
-  setDefaultMessageCount,
   setDefaultFeatures,
+  setDefaultModel,
 } from '@/store/settingsSlice'
 import AnalysisFeatureSelector from '@/components/AnalysisFeatureSelector'
 import { testConnection as testNapcat } from '@/api/napcat'
-import { testOpencodeConnection } from '@/api/opencode'
+import { testOpencodeConnection, listProviders } from '@/api/opencode'
+import type { ProviderInfo, ModelInfo } from '@/types'
 
 export default function SettingsPage() {
   const dispatch = useAppDispatch()
-  const { napcat, opencode, defaultMessageCount, defaultFeatures } = useAppSelector(
+  const { napcat, opencode, defaultFeatures, defaultModel } = useAppSelector(
     (s) => s.settings,
   )
   const napcatRef = useRef(napcat)
   napcatRef.current = napcat
+
+  const [providers, setProviders] = useState<ProviderInfo[]>([])
+  const [providersLoading, setProvidersLoading] = useState(true)
+  const [selectedProviderId, setSelectedProviderId] = useState(defaultModel?.providerID || '')
+  const [selectedModelId, setSelectedModelId] = useState(defaultModel?.modelID || '')
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -34,6 +41,46 @@ export default function SettingsPage() {
     }, 800)
     return () => clearTimeout(timer)
   }, [napcat.host, napcat.port])
+
+  useEffect(() => {
+    listProviders()
+      .then((p) => setProviders(p))
+      .catch(() => setProviders([]))
+      .finally(() => setProvidersLoading(false))
+  }, [])
+
+  useEffect(() => {
+    if (defaultModel) {
+      setSelectedProviderId(defaultModel.providerID)
+      setSelectedModelId(defaultModel.modelID)
+    }
+  }, [defaultModel])
+
+  const currentProvider = providers.find((p) => p.id === selectedProviderId)
+  const modelOptions = currentProvider
+    ? Object.entries(currentProvider.models).map(([key, m]) => ({
+        key,
+        name: m.name || key,
+      }))
+    : []
+
+  const handleProviderChange = (id: string) => {
+    setSelectedProviderId(id)
+    setSelectedModelId('')
+  }
+
+  const handleModelChange = (id: string) => {
+    setSelectedModelId(id)
+    const provider = providers.find((p) => p.id === selectedProviderId)
+    const model = provider?.models[id]
+    if (provider && model) {
+      dispatch(setDefaultModel({
+        providerID: provider.id,
+        modelID: id,
+        name: model.name || id,
+      }))
+    }
+  }
 
   const handleTestNapcat = async () => {
     const ok = await testNapcat(napcat)
@@ -125,15 +172,50 @@ export default function SettingsPage() {
         </CardHeader>
         <Divider />
         <CardBody className="space-y-6">
-          <Slider
-            label={`默认拉取消息条数: ${defaultMessageCount}`}
-            step={10}
-            minValue={10}
-            maxValue={500}
-            value={defaultMessageCount}
-            onChange={(v) => dispatch(setDefaultMessageCount(v as number))}
-            className="max-w-md"
-          />
+          {providersLoading ? (
+            <div className="flex items-center gap-2 text-default-500">
+              <Spinner size="sm" />
+              <span>正在加载模型列表...</span>
+            </div>
+          ) : (
+            <div className="space-y-4 max-w-md">
+              <Select
+                label="AI 模型"
+                placeholder={providers.length === 0 ? '未检测到可用模型（使用 opencode 默认）' : '选择 provider'}
+                selectedKeys={selectedProviderId ? [selectedProviderId] : []}
+                onSelectionChange={(keys) => {
+                  const id = Array.from(keys as Set<string>)[0] || ''
+                  handleProviderChange(id)
+                }}
+                isDisabled={providers.length === 0}
+              >
+                {providers.map((p) => (
+                  <SelectItem key={p.id}>{p.name}</SelectItem>
+                ))}
+              </Select>
+              {currentProvider && (
+                <Select
+                  label="模型"
+                  placeholder="选择具体模型"
+                  selectedKeys={selectedModelId ? [selectedModelId] : []}
+                  onSelectionChange={(keys) => {
+                    const id = Array.from(keys as Set<string>)[0] || ''
+                    handleModelChange(id)
+                  }}
+                >
+                  {modelOptions.map((m) => (
+                    <SelectItem key={m.key}>{m.name}</SelectItem>
+                  ))}
+                </Select>
+              )}
+              {defaultModel && (
+                <p className="text-sm text-default-500">
+                  当前默认: {defaultModel.name}
+                </p>
+              )}
+            </div>
+          )}
+          <Divider />
           <AnalysisFeatureSelector
             selected={defaultFeatures}
             onChange={(f) => dispatch(setDefaultFeatures(f))}
