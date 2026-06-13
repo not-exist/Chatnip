@@ -14,7 +14,7 @@ const defaultOpencodeConfig = {
 
 function loadSettings(): SettingsState {
   try {
-    const raw = localStorage.getItem('qq-aichat-settings')
+    const raw = localStorage.getItem('chatnip-settings')
     if (raw) {
       return JSON.parse(raw)
     }
@@ -31,7 +31,7 @@ function loadSettings(): SettingsState {
 const initialState: SettingsState = loadSettings()
 
 function persist(state: SettingsState) {
-  localStorage.setItem('qq-aichat-settings', JSON.stringify(state))
+  localStorage.setItem('chatnip-settings', JSON.stringify(state))
 }
 
 const settingsSlice = createSlice({

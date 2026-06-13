@@ -10,7 +10,7 @@ export interface SessionRecord {
   createdAt: number
 }
 
-const STORAGE_KEY = 'qq-aichat-sessions'
+const STORAGE_KEY = 'chatnip-sessions'
 
 function load(): Record<string, SessionRecord> {
   try {

@@ -9,7 +9,7 @@ const OPENCODE_PORT = 4096
 const NAPCAT_CONFIG_PATH = path.resolve(__dirname, 'napcat-target.json')
 const CHAT_HISTORY_DIR = path.join(
   process.env.LOCALAPPDATA || path.join(process.env.USERPROFILE || '', 'AppData', 'Local'),
-  'qq-aichat',
+  'chatnip',
   'chat-history',
 )
 

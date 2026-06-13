@@ -24,7 +24,7 @@ export default function Layout() {
               <FiMessageCircle className="text-white text-base" />
             </div>
             <span className="text-lg font-bold bg-gradient-to-r from-primary-500 to-primary-400 bg-clip-text text-transparent">
-              QQ AI Chat
+              Chatnip
             </span>
           </Link>
         </NavbarBrand>
