@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import type { SettingsState, ModelInfo } from '@/types'
+import { saveAppState } from '@/api/appState'
 
 const defaultNapcatConfig = {
   host: '127.0.0.1',
@@ -30,8 +31,20 @@ function loadSettings(): SettingsState {
 
 const initialState: SettingsState = loadSettings()
 
-function persist(state: SettingsState) {
-  localStorage.setItem('chatnip-settings', JSON.stringify(state))
+let isSetup = false
+
+export function setupPersistence(store: { getState: () => { settings: SettingsState }; subscribe: (listener: () => void) => () => void }) {
+  if (isSetup) return
+  isSetup = true
+  let previous = JSON.stringify(store.getState().settings)
+  store.subscribe(() => {
+    const current = store.getState().settings
+    const serialized = JSON.stringify(current)
+    if (serialized === previous) return
+    previous = serialized
+    localStorage.setItem('chatnip-settings', serialized)
+    saveAppState('settings', current).catch(() => {})
+  })
 }
 
 const settingsSlice = createSlice({
@@ -40,23 +53,18 @@ const settingsSlice = createSlice({
   reducers: {
     setNapcatConfig(state, action: PayloadAction<Partial<SettingsState['napcat']>>) {
       state.napcat = { ...state.napcat, ...action.payload }
-      persist(state)
     },
     setOpencodeConfig(state, action: PayloadAction<Partial<SettingsState['opencode']>>) {
       state.opencode = { ...state.opencode, ...action.payload }
-      persist(state)
     },
     setDefaultMessageCount(state, action: PayloadAction<number>) {
       state.defaultMessageCount = action.payload
-      persist(state)
     },
     setDefaultFeatures(state, action: PayloadAction<string[]>) {
       state.defaultFeatures = action.payload
-      persist(state)
     },
     setDefaultModel(state, action: PayloadAction<ModelInfo | undefined>) {
       state.defaultModel = action.payload
-      persist(state)
     },
   },
 })

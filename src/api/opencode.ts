@@ -17,6 +17,7 @@ async function getClient() {
   sdkPromise = createOpencodeClient({
     baseUrl: PROXY_BASE,
   })
+  Promise.resolve(sdkPromise).catch(() => { sdkPromise = null })
   return sdkPromise
 }
 
@@ -106,5 +107,14 @@ export async function testOpencodeConnection(): Promise<boolean> {
     return true
   } catch {
     return false
+  }
+}
+
+export async function restartOpencodeServer(): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch('/__api/opencode/restart', { method: 'POST' })
+    return await res.json()
+  } catch {
+    return { ok: false, error: '请求失败' }
   }
 }

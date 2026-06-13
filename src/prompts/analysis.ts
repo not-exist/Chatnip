@@ -1,5 +1,11 @@
 import type { ChatType, FeatureOption } from '@/types'
 
+export interface DimensionBlock {
+  key: string
+  label: string
+  content: string
+}
+
 export const FEATURE_OPTIONS: FeatureOption[] = [
   {
     key: 'summary',
@@ -37,6 +43,46 @@ export const FEATURE_OPTIONS: FeatureOption[] = [
     description: '互动最频繁的成员对、意见领袖、社交结构',
   },
 ]
+
+export function parseDimensions(rawContent: string): DimensionBlock[] {
+  if (!rawContent) return []
+
+  const sections = rawContent.split(/^## /m)
+  const result: DimensionBlock[] = []
+
+  const preamble = sections[0]?.trim()
+  if (preamble) {
+    result.push({ key: 'other', label: '前言', content: preamble })
+  }
+
+  for (let i = 1; i < sections.length; i++) {
+    const section = sections[i]
+    if (!section) continue
+
+    const newlineIdx = section.indexOf('\n')
+    const headerText =
+      newlineIdx === -1 ? section.trim() : section.slice(0, newlineIdx).trim()
+    const content =
+      newlineIdx === -1 ? '' : section.slice(newlineIdx + 1).trim()
+
+    if (!headerText && !content) continue
+
+    const matched = FEATURE_OPTIONS.find(
+      (opt) =>
+        opt.label === headerText ||
+        opt.label.includes(headerText) ||
+        headerText.includes(opt.label),
+    )
+
+    result.push({
+      key: matched?.key || 'other',
+      label: matched?.label || headerText || '其他',
+      content: content || '',
+    })
+  }
+
+  return result
+}
 
 const FEATURE_PROMPTS: Record<string, string> = {
   summary: `## 基础总结

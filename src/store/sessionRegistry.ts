@@ -1,4 +1,5 @@
 import type { ChatType } from '@/types'
+import { saveAppState } from '@/api/appState'
 
 export interface SessionRecord {
   id: string
@@ -22,6 +23,7 @@ function load(): Record<string, SessionRecord> {
 
 function persist(records: Record<string, SessionRecord>) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(records))
+  saveAppState('sessions', records).catch(() => {})
 }
 
 export function registerSession(record: SessionRecord) {

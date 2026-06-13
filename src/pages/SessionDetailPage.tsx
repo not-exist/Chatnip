@@ -1,15 +1,17 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@heroui/button'
 import { Divider } from '@heroui/divider'
 import { Spinner } from '@heroui/spinner'
-import { FiArrowLeft } from 'react-icons/fi'
+import { Chip } from '@heroui/chip'
+import { FiArrowLeft, FiChevronDown, FiChevronUp } from 'react-icons/fi'
 import toast from 'react-hot-toast'
-import AnalysisResultView from '@/components/AnalysisResultView'
+import DimensionCard from '@/components/DimensionCard'
 import ConversationView from '@/components/ConversationView'
 import ChatInput from '@/components/ChatInput'
 import { useOpencode } from '@/hooks/useOpencode'
-import type { ChatType } from '@/types'
+import { useAppSelector } from '@/store'
+import { parseDimensions } from '@/prompts/analysis'
 
 interface Message {
   role: 'user' | 'assistant' | 'system'
@@ -28,28 +30,33 @@ export default function SessionDetailPage() {
   const chatName =
     (location.state as { chatName?: string })?.chatName || ''
 
+  const isInitialAnalysis = !!initialContent
+  const dimensions = useMemo(
+    () => (initialContent ? parseDimensions(initialContent) : []),
+    [initialContent],
+  )
+
+  const defaultModel = useAppSelector((s) => s.settings.defaultModel)
+
   const { getMessages, sendPrompt } = useOpencode()
-  const [messages, setMessages] = useState<Message[]>(() => {
-    if (initialContent) {
-      return [
-        { role: 'user', content: '(分析请求)', timestamp: 0 },
-        { role: 'assistant', content: initialContent, timestamp: 0 },
-      ]
-    }
-    return []
-  })
+  const [messages, setMessages] = useState<Message[]>([])
+  const [followUpMessages, setFollowUpMessages] = useState<Message[]>([])
   const [sending, setSending] = useState(false)
-  const [loading, setLoading] = useState(!initialContent)
+  const [loading, setLoading] = useState(isInitialAnalysis ? false : true)
+  const [showFollowUpHistory, setShowFollowUpHistory] = useState(false)
+
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
   const loadFromOpencode = useCallback(async () => {
     try {
       const result = await getMessages(sessionId)
       if (result && result.length > 0) {
         const msgs: Message[] = result.map((m) => {
-          const text = m.parts
-            ?.filter((p) => p.type === 'text')
-            .map((p) => (p as { text: string }).text)
-            .join('\n') || ''
+          const text =
+            m.parts
+              ?.filter((p) => p.type === 'text')
+              .map((p) => (p as { text: string }).text)
+              .join('\n') || ''
           return {
             role: (m.info.role as Message['role']) || 'assistant',
             content: text,
@@ -66,32 +73,54 @@ export default function SessionDetailPage() {
   }, [sessionId, getMessages])
 
   useEffect(() => {
-    if (!initialContent) {
+    if (!isInitialAnalysis) {
       loadFromOpencode()
     }
-  }, [initialContent, loadFromOpencode])
+  }, [isInitialAnalysis, loadFromOpencode])
+
+  const scrollToDimension = (key: string) => {
+    const el = cardRefs.current.get(key)
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   const handleSend = async (text: string) => {
     const userMsg: Message = { role: 'user', content: text, timestamp: Date.now() }
-    setMessages((prev) => [...prev, userMsg])
+
+    if (isInitialAnalysis) {
+      setFollowUpMessages((prev) => [...prev, userMsg])
+      setShowFollowUpHistory(true)
+    } else {
+      setMessages((prev) => [...prev, userMsg])
+    }
+
     setSending(true)
 
     try {
-      const result = await sendPrompt(sessionId, text)
-      const assistantText = result.parts
-        ?.filter((p) => p.type === 'text')
-        .map((p) => (p as { text: string }).text)
-        .join('\n') || ''
+      const result = await sendPrompt(sessionId, text, defaultModel)
+      const assistantText =
+        result.parts
+          ?.filter((p) => p.type === 'text')
+          .map((p) => (p as { text: string }).text)
+          .join('\n') || ''
 
       const assistantMsg: Message = {
         role: 'assistant',
         content: assistantText,
         timestamp: Date.now(),
       }
-      setMessages((prev) => [...prev, assistantMsg])
+
+      if (isInitialAnalysis) {
+        setFollowUpMessages((prev) => [...prev, assistantMsg])
+      } else {
+        setMessages((prev) => [...prev, assistantMsg])
+      }
     } catch {
       toast.error('发送失败')
-      setMessages((prev) => prev.slice(0, -1))
+      if (isInitialAnalysis) {
+        setFollowUpMessages((prev) => prev.slice(0, -1))
+      } else {
+        setMessages((prev) => prev.slice(0, -1))
+      }
     } finally {
       setSending(false)
     }
@@ -108,30 +137,119 @@ export default function SessionDetailPage() {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
+      {/* Header */}
       <div className="flex items-center gap-3">
-        <Button variant="light" isIconOnly onPress={() => navigate('/sessions')} className="rounded-xl">
+        <Button
+          variant="light"
+          isIconOnly
+          onPress={() => navigate('/sessions')}
+          className="rounded-xl"
+        >
           <FiArrowLeft className="text-lg" />
         </Button>
         <div>
           <h1 className="text-xl font-bold">
             {chatName ? `分析: ${chatName}` : '分析结果'}
           </h1>
-          <p className="text-sm text-default-500">可在下方追问更多细节</p>
+          {isInitialAnalysis && (
+            <p className="text-sm text-default-500">可在下方追问更多细节</p>
+          )}
         </div>
       </div>
 
       <Divider />
 
-      <div className="min-h-[300px]">
-        <ConversationView messages={messages} />
-      </div>
+      {/* Initial Analysis: Dimension Cards View */}
+      {isInitialAnalysis && dimensions.length > 0 && (
+        <>
+          {/* Dimension quick navigation chips */}
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {dimensions.map((dim) => (
+              <button
+                key={dim.key}
+                type="button"
+                onClick={() => scrollToDimension(dim.key)}
+                className="flex-shrink-0"
+              >
+                <Chip
+                  size="sm"
+                  variant="flat"
+                  className="cursor-pointer font-medium"
+                >
+                  {dim.label}
+                </Chip>
+              </button>
+            ))}
+          </div>
 
-      <div className="sticky bottom-0 bg-background/85 backdrop-blur-md py-4 -mx-4 px-4 border-t border-default-100">
+          {/* Dimension cards grid */}
+          <div className="space-y-4">
+            {dimensions.map((dim) => (
+              <div
+                key={dim.key}
+                ref={(el) => {
+                  if (el) {
+                    cardRefs.current.set(dim.key, el)
+                  }
+                }}
+              >
+                <DimensionCard dimension={dim} />
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* History Mode: Conversation View */}
+      {!isInitialAnalysis && (
+        <div className="min-h-[300px]">
+          <ConversationView messages={messages} />
+        </div>
+      )}
+
+      {/* Follow-up section */}
+      <div className="sticky bottom-0 bg-background/85 backdrop-blur-md py-4 -mx-4 px-4 border-t border-default-100 space-y-4">
+        {isInitialAnalysis && (
+          <div className="flex items-center gap-3">
+            <Divider className="flex-1" />
+            <span className="text-xs text-default-400 font-medium flex-shrink-0">
+              追问
+            </span>
+            <Divider className="flex-1" />
+          </div>
+        )}
+
         <ChatInput
           onSend={handleSend}
           disabled={sending}
-          placeholder="追问更多分析细节..."
+          placeholder={
+            isInitialAnalysis ? '输入更多分析需求...' : '追问更多分析细节...'
+          }
         />
+
+        {/* Follow-up history (initial analysis mode) */}
+        {isInitialAnalysis && followUpMessages.length > 0 && (
+          <div>
+            <Button
+              variant="light"
+              size="sm"
+              className="text-xs text-default-500 mb-2"
+              onPress={() => setShowFollowUpHistory((prev) => !prev)}
+              startContent={
+                showFollowUpHistory ? (
+                  <FiChevronUp />
+                ) : (
+                  <FiChevronDown />
+                )
+              }
+            >
+              追问历史 ({followUpMessages.length} 条消息)
+            </Button>
+            {showFollowUpHistory && (
+              <ConversationView messages={followUpMessages} />
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

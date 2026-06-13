@@ -16,7 +16,7 @@ import {
 } from '@/store/settingsSlice'
 import AnalysisFeatureSelector from '@/components/AnalysisFeatureSelector'
 import { testConnection as testNapcat } from '@/api/napcat'
-import { testOpencodeConnection, listProviders } from '@/api/opencode'
+import { testOpencodeConnection, listProviders, restartOpencodeServer } from '@/api/opencode'
 import type { ProviderInfo, ModelInfo } from '@/types'
 
 export default function SettingsPage() {
@@ -68,6 +68,7 @@ export default function SettingsPage() {
   const handleProviderChange = (id: string) => {
     setSelectedProviderId(id)
     setSelectedModelId('')
+    dispatch(setDefaultModel(undefined))
   }
 
   const handleModelChange = (id: string) => {
@@ -191,6 +192,18 @@ export default function SettingsPage() {
             startContent={<FiCheckCircle />}
           >
             测试连接
+          </Button>
+          <Button
+            variant="flat"
+            color="warning"
+            onPress={async () => {
+              const result = await restartOpencodeServer()
+              if (result.ok) toast.success('Opencode Server 已重启')
+              else toast.error(result.error || '重启失败')
+            }}
+            className="rounded-xl"
+          >
+            重启 Server
           </Button>
         </CardBody>
       </Card>

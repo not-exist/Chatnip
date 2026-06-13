@@ -11,6 +11,7 @@ interface Message {
 
 interface ConversationViewProps {
   messages: Message[]
+  hideUserMessages?: boolean
 }
 
 function MessageBubble({ msg }: { msg: Message }) {
@@ -63,14 +64,16 @@ function MessageBubble({ msg }: { msg: Message }) {
   )
 }
 
-export default function ConversationView({ messages }: ConversationViewProps) {
+export default function ConversationView({ messages, hideUserMessages = false }: ConversationViewProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const displayMessages = messages.filter((m) => m.role !== 'system')
+  const displayMessages = hideUserMessages
+    ? messages.filter((m) => m.role !== 'system' && m.role !== 'user')
+    : messages.filter((m) => m.role !== 'system')
 
   if (displayMessages.length === 0) {
     return (

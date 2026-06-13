@@ -1,12 +1,14 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { useSelector, useDispatch, type TypedUseSelectorHook } from 'react-redux'
-import settingsReducer from './settingsSlice'
+import settingsReducer, { setupPersistence } from './settingsSlice'
 
 export const store = configureStore({
   reducer: {
     settings: settingsReducer,
   },
 })
+
+setupPersistence(store)
 
 export type RootState = ReturnType<typeof store.getState>
 export type AppDispatch = typeof store.dispatch
