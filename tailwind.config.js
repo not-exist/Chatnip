@@ -10,6 +10,15 @@ export default {
   theme: {
     extend: {
       fontFamily: {
+        sans: [
+          '"PingFang SC"',
+          '"Microsoft YaHei"',
+          '"Hiragino Sans GB"',
+          '"WenQuanYi Micro Hei"',
+          'system-ui',
+          '-apple-system',
+          'sans-serif',
+        ],
         mono: [
           'ui-monospace',
           'SFMono-Regular',
@@ -20,6 +29,28 @@ export default {
           'JetBrains Mono',
           'monospace',
         ],
+      },
+      borderRadius: {
+        '2sm': '0.375rem',
+      },
+      keyframes: {
+        'fade-in-up': {
+          '0%': { opacity: '0', transform: 'translateY(12px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'fade-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        'skeleton-pulse': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.4' },
+        },
+      },
+      animation: {
+        'fade-in-up': 'fade-in-up 0.35s ease-out both',
+        'fade-in': 'fade-in 0.3s ease-out both',
+        'skeleton-pulse': 'skeleton-pulse 1.8s ease-in-out infinite',
       },
     },
   },

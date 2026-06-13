@@ -5,6 +5,7 @@ import { Button } from '@heroui/button'
 import { Divider } from '@heroui/divider'
 import { Select, SelectItem } from '@heroui/select'
 import { Spinner } from '@heroui/spinner'
+import { FiServer, FiCpu, FiSettings, FiCheckCircle } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { useAppSelector, useAppDispatch } from '@/store'
 import {
@@ -101,19 +102,28 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-2xl">
+      <div>
+        <h1 className="text-2xl font-bold">设置</h1>
+        <p className="text-sm text-default-500 mt-1">配置 NapCat 与 Opencode 连接</p>
+      </div>
+
       <Card className="card-enhanced">
-        <CardHeader>
-          <h2 className="text-xl font-semibold">NapCat 连接配置</h2>
+        <CardHeader className="flex gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <FiServer className="text-primary" />
+          </div>
+          <h2 className="text-base font-semibold">NapCat 连接配置</h2>
         </CardHeader>
         <Divider />
-        <CardBody className="space-y-4">
+        <CardBody className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="主机地址"
               value={napcat.host}
               onValueChange={(v) => dispatch(setNapcatConfig({ host: v }))}
               placeholder="127.0.0.1"
+              classNames={{ inputWrapper: 'rounded-xl' }}
             />
             <Input
               label="端口"
@@ -121,6 +131,7 @@ export default function SettingsPage() {
               value={String(napcat.port)}
               onValueChange={(v) => dispatch(setNapcatConfig({ port: Number(v) || 3000 }))}
               placeholder="3000"
+              classNames={{ inputWrapper: 'rounded-xl' }}
             />
           </div>
           <Input
@@ -129,19 +140,29 @@ export default function SettingsPage() {
             onValueChange={(v) => dispatch(setNapcatConfig({ token: v }))}
             placeholder="Bearer token"
             type="password"
+            classNames={{ inputWrapper: 'rounded-xl' }}
           />
-          <Button color="primary" variant="flat" onPress={handleTestNapcat}>
+          <Button
+            color="primary"
+            variant="flat"
+            onPress={handleTestNapcat}
+            className="rounded-xl"
+            startContent={<FiCheckCircle />}
+          >
             测试连接
           </Button>
         </CardBody>
       </Card>
 
       <Card className="card-enhanced">
-        <CardHeader>
-          <h2 className="text-xl font-semibold">Opencode 连接配置</h2>
+        <CardHeader className="flex gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
+            <FiCpu className="text-secondary" />
+          </div>
+          <h2 className="text-base font-semibold">Opencode 连接配置</h2>
         </CardHeader>
         <Divider />
-        <CardBody className="space-y-4">
+        <CardBody className="space-y-4 py-4">
           <p className="text-sm text-default-500">
             opencode serve 随 Vite 自动启动，通过代理连接（端口 4096）
           </p>
@@ -151,6 +172,7 @@ export default function SettingsPage() {
               value={opencode.host}
               onValueChange={(v) => dispatch(setOpencodeConfig({ host: v }))}
               placeholder="127.0.0.1"
+              classNames={{ inputWrapper: 'rounded-xl' }}
             />
             <Input
               label="端口"
@@ -158,24 +180,34 @@ export default function SettingsPage() {
               value={String(opencode.port)}
               onValueChange={(v) => dispatch(setOpencodeConfig({ port: Number(v) || 4096 }))}
               placeholder="4096"
+              classNames={{ inputWrapper: 'rounded-xl' }}
             />
           </div>
-          <Button color="primary" variant="flat" onPress={handleTestOpencode}>
+          <Button
+            color="primary"
+            variant="flat"
+            onPress={handleTestOpencode}
+            className="rounded-xl"
+            startContent={<FiCheckCircle />}
+          >
             测试连接
           </Button>
         </CardBody>
       </Card>
 
       <Card className="card-enhanced">
-        <CardHeader>
-          <h2 className="text-xl font-semibold">默认分析设置</h2>
+        <CardHeader className="flex gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-default-100 flex items-center justify-center">
+            <FiSettings className="text-default-600" />
+          </div>
+          <h2 className="text-base font-semibold">默认分析设置</h2>
         </CardHeader>
         <Divider />
-        <CardBody className="space-y-6">
+        <CardBody className="space-y-6 py-4">
           {providersLoading ? (
-            <div className="flex items-center gap-2 text-default-500">
+            <div className="flex items-center gap-2 text-default-500 py-2">
               <Spinner size="sm" />
-              <span>正在加载模型列表...</span>
+              <span className="text-sm">正在加载模型列表...</span>
             </div>
           ) : (
             <div className="space-y-4 max-w-md">
@@ -188,6 +220,7 @@ export default function SettingsPage() {
                   handleProviderChange(id)
                 }}
                 isDisabled={providers.length === 0}
+                classNames={{ trigger: 'rounded-xl' }}
               >
                 {providers.map((p) => (
                   <SelectItem key={p.id}>{p.name}</SelectItem>
@@ -202,6 +235,7 @@ export default function SettingsPage() {
                     const id = Array.from(keys as Set<string>)[0] || ''
                     handleModelChange(id)
                   }}
+                  classNames={{ trigger: 'rounded-xl' }}
                 >
                   {modelOptions.map((m) => (
                     <SelectItem key={m.key}>{m.name}</SelectItem>
@@ -209,9 +243,10 @@ export default function SettingsPage() {
                 </Select>
               )}
               {defaultModel && (
-                <p className="text-sm text-default-500">
+                <div className="flex items-center gap-2 text-sm text-default-500">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                   当前默认: {defaultModel.name}
-                </p>
+                </div>
               )}
             </div>
           )}

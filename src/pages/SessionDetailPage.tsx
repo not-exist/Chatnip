@@ -99,16 +99,17 @@ export default function SessionDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-96">
-        <Spinner size="lg" color="primary" label="加载会话..." />
+      <div className="flex flex-col items-center justify-center h-96 gap-4">
+        <Spinner size="lg" color="primary" />
+        <p className="text-sm text-default-500">加载会话消息...</p>
       </div>
     )
   }
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      <div className="flex items-center gap-4">
-        <Button variant="light" isIconOnly onPress={() => navigate('/sessions')}>
+      <div className="flex items-center gap-3">
+        <Button variant="light" isIconOnly onPress={() => navigate('/sessions')} className="rounded-xl">
           <FiArrowLeft className="text-lg" />
         </Button>
         <div>
@@ -121,11 +122,11 @@ export default function SessionDetailPage() {
 
       <Divider />
 
-      <div className="space-y-6">
+      <div className="min-h-[300px]">
         <ConversationView messages={messages} />
       </div>
 
-      <div className="sticky bottom-0 bg-background/80 backdrop-blur py-4 border-t border-default-200">
+      <div className="sticky bottom-0 bg-background/85 backdrop-blur-md py-4 -mx-4 px-4 border-t border-default-100">
         <ChatInput
           onSend={handleSend}
           disabled={sending}

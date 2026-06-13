@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
-import { Card, CardBody } from '@heroui/card'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { FiUser, FiCpu } from 'react-icons/fi'
 
 interface Message {
   role: 'user' | 'assistant' | 'system'
@@ -13,6 +13,56 @@ interface ConversationViewProps {
   messages: Message[]
 }
 
+function MessageBubble({ msg }: { msg: Message }) {
+  const isUser = msg.role === 'user'
+  const timeStr = msg.timestamp
+    ? new Date(msg.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+    : ''
+
+  return (
+    <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+      <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs ${
+        isUser
+          ? 'bg-gradient-to-br from-primary-400 to-primary-500 text-white'
+          : 'bg-default-200 text-default-600'
+      }`}>
+        {isUser ? <FiUser /> : <FiCpu />}
+      </div>
+
+      <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[78%]`}>
+        <div className={`px-4 py-2.5 text-sm leading-relaxed ${
+          isUser
+            ? 'bubble-user rounded-2xl rounded-tr-md'
+            : 'bubble-ai rounded-2xl rounded-tl-md'
+        }`}>
+          {isUser ? (
+            <p className="whitespace-pre-wrap">{msg.content.length > 1200 ? msg.content.slice(0, 1200) + '\n...(已截断)' : msg.content}</p>
+          ) : (
+            <div className="prose prose-sm dark:prose-invert max-w-none
+              prose-p:my-1
+              prose-headings:mt-3 prose-headings:mb-1
+              prose-code:bg-default-200 prose-code:px-1 prose-code:rounded
+              prose-code:before:content-none prose-code:after:content-none
+              prose-table:border-collapse prose-table:w-full prose-table:text-xs
+              prose-th:border prose-th:border-default-300 prose-th:bg-default-100 prose-th:px-2 prose-th:py-1.5
+              prose-td:border prose-td:border-default-300 prose-td:px-2 prose-td:py-1.5
+              prose-blockquote:border-l-primary prose-blockquote:bg-default-50/60 prose-blockquote:py-1 prose-blockquote:px-3 prose-blockquote:not-italic
+              prose-li:my-0.5
+            ">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {msg.content}
+              </ReactMarkdown>
+            </div>
+          )}
+        </div>
+        {timeStr && (
+          <span className="text-[11px] text-default-400 mt-1 px-1">{timeStr}</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function ConversationView({ messages }: ConversationViewProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -22,40 +72,19 @@ export default function ConversationView({ messages }: ConversationViewProps) {
 
   const displayMessages = messages.filter((m) => m.role !== 'system')
 
+  if (displayMessages.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-default-400">
+        <FiCpu className="text-4xl mb-4 opacity-40" />
+        <p className="text-sm">暂无消息</p>
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {displayMessages.map((msg, i) => (
-        <div
-          key={i}
-          className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-        >
-          <Card
-            className={`max-w-[80%] ${
-              msg.role === 'user'
-                ? 'bg-primary/10 border-primary/20'
-                : 'bg-default-100'
-            }`}
-          >
-            <CardBody className="py-2 px-4">
-              <div className="text-xs text-default-500 mb-1">
-                {msg.role === 'user' ? '你' : 'AI'} · {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('zh-CN') : ''}
-              </div>
-              <div className="prose prose-sm dark:prose-invert max-w-none
-                prose-p:my-1
-                prose-code:bg-default-200 prose-code:px-1 prose-code:rounded
-                prose-code:before:content-none prose-code:after:content-none
-                prose-table:border-collapse prose-table:w-full
-                prose-th:border prose-th:border-default-300 prose-th:bg-default-100 prose-th:px-3 prose-th:py-2
-                prose-td:border prose-td:border-default-300 prose-td:px-3 prose-td:py-2
-                prose-blockquote:border-l-primary prose-blockquote:bg-default-50 prose-blockquote:py-1 prose-blockquote:px-4
-              ">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {msg.content}
-                </ReactMarkdown>
-              </div>
-            </CardBody>
-          </Card>
-        </div>
+        <MessageBubble key={i} msg={msg} />
       ))}
       <div ref={bottomRef} />
     </div>

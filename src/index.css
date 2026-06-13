@@ -2,31 +2,228 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---- 排版 ---- */
 .prose {
   max-width: none;
 }
 
+/* ---- 背景 ---- */
 .app-bg {
-  background: linear-gradient(135deg, #faf9fb 0%, #fdf2f7 30%, #f8f6fa 60%, #faf9fb 100%);
+  background: linear-gradient(160deg, #faf9fb 0%, #fdf2f7 28%, #f8f6fa 55%, #f0f4fc 78%, #faf9fb 100%);
   background-attachment: fixed;
 }
 
+.dark .app-bg {
+  background: linear-gradient(160deg, #110b14 0%, #1a0f1f 30%, #130e18 55%, #0f121a 78%, #110b14 100%);
+  background-attachment: fixed;
+}
+
+/* ---- 装饰光斑 ---- */
+.app-bg::before {
+  content: '';
+  position: fixed;
+  top: -20%;
+  right: -15%;
+  width: 50vw;
+  height: 50vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 127, 172, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app-bg::after {
+  content: '';
+  position: fixed;
+  bottom: -10%;
+  left: -10%;
+  width: 40vw;
+  height: 40vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(136, 192, 208, 0.05) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dark .app-bg::before {
+  background: radial-gradient(circle, rgba(243, 18, 96, 0.08) 0%, transparent 70%);
+}
+
+.dark .app-bg::after {
+  background: radial-gradient(circle, rgba(136, 192, 208, 0.04) 0%, transparent 70%);
+}
+
+/* ---- 卡片 ---- */
 .card-enhanced {
   @apply border border-default-100/60 shadow-sm;
   backdrop-filter: blur(4px);
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
 .card-enhanced:hover {
   @apply border-default-200 shadow-md;
+  transform: translateY(-1px);
 }
 
+.card-accent {
+  @apply relative overflow-hidden;
+}
+
+.card-accent::before {
+  content: '';
+  @apply absolute top-0 left-0 h-full w-1 bg-gradient-to-b from-primary-400 to-primary-300 rounded-l-lg;
+}
+
+/* ---- 导航 ---- */
 .nav-glass {
   backdrop-filter: saturate(180%) blur(12px);
-  @apply bg-background/70 border-b border-default-100/50;
+  @apply bg-background/75 border-b border-primary-200/30;
 }
 
-.dark .app-bg {
-  background: linear-gradient(135deg, #110b14 0%, #1a0f1f 30%, #130e18 60%, #110b14 100%);
-  background-attachment: fixed;
+.dark .nav-glass {
+  @apply bg-background/70 border-b border-primary-800/30;
+}
+
+/* ---- 页面进入动画 ---- */
+.page-enter {
+  animation: page-enter 0.35s ease-out both;
+}
+
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- 骨架屏 ---- */
+.skeleton {
+  @apply bg-default-200 rounded-lg;
+  animation: skeleton-pulse 1.8s ease-in-out infinite;
+}
+
+.dark .skeleton {
+  @apply bg-default-200/40;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* ---- 聊天气泡 ---- */
+.bubble-user {
+  @apply bg-gradient-to-br from-primary-400 to-primary-500 text-white shadow-sm;
+}
+
+.bubble-ai {
+  @apply bg-default-100 border border-default-200/60;
+}
+
+.dark .bubble-ai {
+  @apply bg-default-100/50 border-default-200/30;
+}
+
+/* ---- 渐变按钮 ---- */
+.btn-gradient {
+  @apply bg-gradient-to-r from-primary-400 to-primary-500 text-white shadow-sm;
+  transition: opacity 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.btn-gradient:hover {
+  @apply shadow-md;
+  transform: translateY(-1px);
+}
+
+.btn-gradient:active {
+  transform: translateY(0);
+}
+
+/* ---- 滚动条 ---- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-default-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-default-400;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  @apply bg-default-500/40;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  @apply bg-default-400/50;
+}
+
+/* ---- 选中文本 ---- */
+::selection {
+  @apply bg-primary-200 text-primary-900;
+}
+
+.dark ::selection {
+  @apply bg-primary-800 text-primary-100;
+}
+
+/* ---- react-markdown 表格 ---- */
+.prose table {
+  @apply border-collapse w-full text-sm;
+}
+
+.prose th {
+  @apply border border-default-300 bg-default-100 px-3 py-2 text-left font-semibold;
+}
+
+.prose td {
+  @apply border border-default-300 px-3 py-2;
+}
+
+.prose blockquote {
+  @apply border-l-[3px] border-primary/40 bg-default-50/60 py-2 px-4 not-italic text-default-700;
+}
+
+.prose code {
+  @apply bg-default-200 px-1.5 py-0.5 rounded text-sm;
+}
+
+.prose code::before,
+.prose code::after {
+  content: none;
+}
+
+.dark .prose th {
+  @apply border-default-700 bg-default-200/10;
+}
+
+.dark .prose td {
+  @apply border-default-700;
+}
+
+.dark .prose blockquote {
+  @apply bg-default-200/10 text-default-400;
+}
+
+/* ---- 减弱动效 ---- */
+@media (prefers-reduced-motion: reduce) {
+  .page-enter,
+  .card-enhanced,
+  .btn-gradient,
+  .bubble-user,
+  .bubble-ai {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+
+  .app-bg::before,
+  .app-bg::after {
+    display: none;
+  }
 }

@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { Card, CardBody, CardHeader } from '@heroui/card'
 import { Button } from '@heroui/button'
 import { Divider } from '@heroui/divider'
 import { Spinner } from '@heroui/spinner'
 import { Select, SelectItem } from '@heroui/select'
-import { FiArrowLeft } from 'react-icons/fi'
+import { FiArrowLeft, FiInfo, FiSliders, FiZap } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import AnalysisFeatureSelector from '@/components/AnalysisFeatureSelector'
 import DateRangePicker from '@/components/DateRangePicker'
@@ -223,36 +223,57 @@ export default function NewAnalysisPage() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <Button
           variant="light"
           isIconOnly
           onPress={() => navigate(-1)}
+          className="rounded-xl"
         >
           <FiArrowLeft className="text-lg" />
         </Button>
-        <h1 className="text-2xl font-bold">分析配置</h1>
+        <div>
+          <h1 className="text-2xl font-bold">分析配置</h1>
+          <p className="text-sm text-default-500 mt-0.5">配置分析参数，开始 AI 分析</p>
+        </div>
       </div>
 
       <Card className="card-enhanced">
-        <CardHeader>
-          <h2 className="text-lg font-semibold">会话信息</h2>
+        <CardHeader className="flex gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <FiInfo className="text-primary" />
+          </div>
+          <h2 className="text-base font-semibold">会话信息</h2>
         </CardHeader>
         <Divider />
-        <CardBody className="space-y-2">
-          <p><span className="text-default-500">类型:</span> {chatType === 'group' ? '群聊' : '私聊'}</p>
-          <p><span className="text-default-500">名称:</span> {chatName}</p>
-          <p><span className="text-default-500">ID:</span> {chatId}</p>
+        <CardBody className="space-y-3 py-4">
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <span className="text-default-400 text-xs">类型</span>
+              <p className="font-medium mt-0.5">{chatType === 'group' ? '群聊' : '私聊'}</p>
+            </div>
+            <div>
+              <span className="text-default-400 text-xs">名称</span>
+              <p className="font-medium mt-0.5 truncate">{chatName}</p>
+            </div>
+            <div>
+              <span className="text-default-400 text-xs">ID</span>
+              <p className="font-medium mt-0.5 font-mono text-xs">{chatId}</p>
+            </div>
+          </div>
         </CardBody>
       </Card>
 
       <Card className="card-enhanced">
-        <CardHeader>
-          <h2 className="text-lg font-semibold">分析参数</h2>
+        <CardHeader className="flex gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
+            <FiSliders className="text-secondary" />
+          </div>
+          <h2 className="text-base font-semibold">分析参数</h2>
         </CardHeader>
         <Divider />
-        <CardBody className="space-y-6">
-          <div className="space-y-2">
+        <CardBody className="space-y-6 py-4">
+          <div className="space-y-2.5">
             <label className="text-sm font-medium text-default-700">AI 模型</label>
             <div className="flex gap-2">
               <Select
@@ -264,6 +285,7 @@ export default function NewAnalysisPage() {
                 size="sm"
                 className="max-w-[200px]"
                 isDisabled={providers.length === 0}
+                classNames={{ trigger: 'rounded-xl' }}
               >
                 {providers.map((p) => (
                   <SelectItem key={p.id}>{p.name}</SelectItem>
@@ -278,6 +300,7 @@ export default function NewAnalysisPage() {
                   }
                   size="sm"
                   className="max-w-[300px]"
+                  classNames={{ trigger: 'rounded-xl' }}
                 >
                   {modelOptions.map((m) => (
                     <SelectItem key={m.key}>{m.name}</SelectItem>
@@ -290,7 +313,7 @@ export default function NewAnalysisPage() {
             )}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <label className="text-sm font-medium text-default-700">日期范围</label>
             <DateRangePicker value={dateRange} onChange={setDateRange} />
             <p className="text-xs text-default-400">
@@ -305,10 +328,11 @@ export default function NewAnalysisPage() {
       <Button
         color="primary"
         size="lg"
-        className="w-full"
+        className="w-full h-12 rounded-2xl font-semibold text-base bg-gradient-to-r from-primary-400 to-primary-500 shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-px"
         isLoading={loading}
         isDisabled={!dateRange?.from}
         onPress={handleStartAnalysis}
+        startContent={!loading ? <FiZap /> : undefined}
       >
         {loading ? status : '开始分析'}
       </Button>
@@ -316,7 +340,7 @@ export default function NewAnalysisPage() {
       {loading && (
         <div className="flex flex-col items-center gap-4 py-8">
           <Spinner size="lg" color="primary" />
-          <p className="text-default-500">{status}</p>
+          <p className="text-default-500 text-sm">{status}</p>
         </div>
       )}
     </div>
