@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import * as opencodeApi from '@/api/opencode'
+import type { FilePartInput } from '@/api/opencode'
 import { registerSession, unregisterSession, getRegisteredSessions, updateSessionTitle } from '@/store/sessionRegistry'
 import type { ChatType, SessionInfo, ModelInfo } from '@/types'
 
@@ -69,6 +70,12 @@ export function useOpencode() {
     [],
   )
 
+  const sendPromptWithFiles = useCallback(
+    (sessionId: string, text: string, system: string, files: FilePartInput[], model?: ModelInfo) =>
+      opencodeApi.sendPromptWithFiles(sessionId, text, system, files, model),
+    [],
+  )
+
   const listProviders = useCallback(
     () => opencodeApi.listProviders(),
     [],
@@ -79,5 +86,5 @@ export function useOpencode() {
     [],
   )
 
-  return { createSession, deleteSession, listSessions, getMessages, sendPrompt, listProviders, testConnection }
+  return { createSession, deleteSession, listSessions, getMessages, sendPrompt, sendPromptWithFiles, listProviders, testConnection }
 }

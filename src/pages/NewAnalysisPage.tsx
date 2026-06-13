@@ -15,6 +15,8 @@ import { useNapcatApi } from '@/hooks/useNapcatApi'
 import { useOpencode } from '@/hooks/useOpencode'
 import { buildUserPrompt, getSystemPrompt, getFeaturePrompts, formatMessages } from '@/prompts/analysis'
 import { listProviders } from '@/api/opencode'
+import type { FilePartInput } from '@/api/opencode'
+import { writeChatFile, cleanupChatHistory } from '@/api/fileWriter'
 import type { ChatType, ProviderInfo, ModelInfo } from '@/types'
 import type { DateRange } from 'react-day-picker'
 
@@ -31,7 +33,7 @@ export default function NewAnalysisPage() {
 
   const { defaultFeatures, defaultModel } = useAppSelector((s) => s.settings)
   const { getGroupMsgHistory, getFriendMsgHistory } = useNapcatApi()
-  const { createSession, sendPrompt } = useOpencode()
+  const { createSession, sendPromptWithFiles } = useOpencode()
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [features, setFeatures] = useState(defaultFeatures)
@@ -166,10 +168,28 @@ export default function NewAnalysisPage() {
         toast('已拉取最近 20000 条消息，可能未完整覆盖所选日期范围', { icon: '⚠️' })
       }
 
-      const formatted = formatMessages(filtered)
-
       const dateFrom = rangeFrom.toLocaleDateString('zh-CN')
       const dateTo = rangeTo.toLocaleDateString('zh-CN')
+
+      const groups = new Map<string, typeof filtered>()
+      for (const msg of filtered) {
+        const dateKey = new Date(msg.time * 1000).toISOString().slice(0, 10)
+        if (!groups.has(dateKey)) groups.set(dateKey, [])
+        groups.get(dateKey)!.push(msg)
+      }
+
+      const sortedDates = [...groups.keys()].sort()
+      setStatus(`正在写入 ${sortedDates.length} 个临时文件...`)
+
+      const fileParts = await Promise.all(
+        sortedDates.map(async (dateKey) => {
+          const msgs = groups.get(dateKey)!
+          const text = formatMessages(msgs)
+          const filename = `chat-${dateKey}.txt`
+          const url = await writeChatFile(filename, text)
+          return { type: 'file' as const, mime: 'text/plain', filename, url }
+        })
+      )
 
       const userPrompt = buildUserPrompt({
         chatType,
@@ -178,11 +198,10 @@ export default function NewAnalysisPage() {
         features,
         dateFrom,
         dateTo,
-        formattedMessages: formatted,
+        fileCount: sortedDates.length,
       })
 
       const systemPrompt = getSystemPrompt() + '\n\n' + getFeaturePrompts(features)
-      const fullPrompt = `System: ${systemPrompt}\n\n${userPrompt}`
 
       setStatus('正在创建分析会话...')
 
@@ -197,7 +216,7 @@ export default function NewAnalysisPage() {
 
       setStatus('正在进行 AI 分析，请耐心等待...')
 
-      const result = await sendPrompt(sessionId, fullPrompt, selectedModel)
+      const result = await sendPromptWithFiles(sessionId, userPrompt, systemPrompt, fileParts, selectedModel)
       const assistantContent = result.parts
         ?.filter((p) => p.type === 'text')
         .map((p) => (p as { text: string }).text)
@@ -218,6 +237,7 @@ export default function NewAnalysisPage() {
     } finally {
       setLoading(false)
       setStatus('')
+      cleanupChatHistory().catch(() => {})
     }
   }
 

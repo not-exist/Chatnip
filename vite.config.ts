@@ -7,6 +7,11 @@ import type { IncomingMessage, ServerResponse } from 'http'
 
 const OPENCODE_PORT = 4096
 const NAPCAT_CONFIG_PATH = path.resolve(__dirname, 'napcat-target.json')
+const CHAT_HISTORY_DIR = path.join(
+  process.env.LOCALAPPDATA || path.join(process.env.USERPROFILE || '', 'AppData', 'Local'),
+  'qq-aichat',
+  'chat-history',
+)
 
 interface NapcatTarget {
   host: string
@@ -129,6 +134,63 @@ function opencodePlugin() {
             res.statusCode = 400
             res.setHeader('content-type', 'application/json')
             res.end(JSON.stringify({ ok: false }))
+          }
+          return
+        }
+        next()
+      })
+
+      // Chat history file write endpoint
+      server.middlewares.use(async (req, res, next) => {
+        if (req.method === 'POST' && req.url === '/__api/chat-history/write') {
+          try {
+            const body = await rawBody(req)
+            const data = body ? JSON.parse(body.toString()) : {}
+            const { filename, content } = data
+            if (!filename || content === undefined) {
+              res.statusCode = 400
+              res.setHeader('content-type', 'application/json')
+              res.end(JSON.stringify({ ok: false, error: 'Missing filename or content' }))
+              return
+            }
+            const safeName = path.basename(filename)
+            if (safeName !== filename || safeName === '' || safeName === '..') {
+              res.statusCode = 400
+              res.setHeader('content-type', 'application/json')
+              res.end(JSON.stringify({ ok: false, error: 'Invalid filename' }))
+              return
+            }
+            fs.mkdirSync(CHAT_HISTORY_DIR, { recursive: true })
+            const filePath = path.join(CHAT_HISTORY_DIR, safeName)
+            fs.writeFileSync(filePath, content, 'utf-8')
+            const url = 'file:///' + filePath.replace(/\\/g, '/')
+            res.statusCode = 200
+            res.setHeader('content-type', 'application/json')
+            res.end(JSON.stringify({ ok: true, url }))
+          } catch (err) {
+            res.statusCode = 500
+            res.setHeader('content-type', 'application/json')
+            res.end(JSON.stringify({ ok: false, error: String(err) }))
+          }
+          return
+        }
+        next()
+      })
+
+      // Chat history cleanup endpoint
+      server.middlewares.use(async (req, res, next) => {
+        if (req.method === 'DELETE' && req.url === '/__api/chat-history/clean') {
+          try {
+            if (fs.existsSync(CHAT_HISTORY_DIR)) {
+              fs.rmSync(CHAT_HISTORY_DIR, { recursive: true, force: true })
+            }
+            res.statusCode = 200
+            res.setHeader('content-type', 'application/json')
+            res.end(JSON.stringify({ ok: true }))
+          } catch (err) {
+            res.statusCode = 500
+            res.setHeader('content-type', 'application/json')
+            res.end(JSON.stringify({ ok: false, error: String(err) }))
           }
           return
         }

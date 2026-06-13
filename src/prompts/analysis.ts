@@ -85,7 +85,10 @@ export function getSystemPrompt(): string {
 3. 统计数据使用表格呈现
 4. 具体结论引用原文消息作为证据（格式：> [时间] 昵称: "原文"）
 5. 使用中文输出，表达简洁专业
-6. 如果某个维度信息不足（如消息太少无法做情感分析），诚实说明而非强行凑数`
+6. 如果某个维度信息不足（如消息太少无法做情感分析），诚实说明而非强行凑数
+
+## 重要说明
+聊天记录已按天分批存储在附加的文本文件中（每个文件对应一天的聊天记录）。你必须完整读取每一个附加文件的内容，不得遗漏任何文件。未完整看完所有文件之前，不得开始输出分析结果。`
 }
 
 export function getFeaturePrompts(features: string[]): string {
@@ -151,9 +154,9 @@ export function buildUserPrompt(params: {
   features: string[]
   dateFrom: string
   dateTo: string
-  formattedMessages: string
+  fileCount: number
 }): string {
-  const { chatType, chatName, messageCount, features, dateFrom, dateTo, formattedMessages } = params
+  const { chatType, chatName, messageCount, features, dateFrom, dateTo, fileCount } = params
   const typeLabel = chatType === 'group' ? '群聊' : '私聊'
   const featureList = getFeatureLabels(features)
 
@@ -167,7 +170,5 @@ export function buildUserPrompt(params: {
 ${featureList}
 
 ## 聊天记录
----
-${formattedMessages}
----`
+聊天记录已按天存储在 ${fileCount} 个附加文件中（${dateFrom} ~ ${dateTo}），请逐一完整阅读所有文件内容。`
 }

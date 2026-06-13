@@ -1,5 +1,12 @@
 import type { ProviderInfo, ModelInfo } from '@/types'
 
+export interface FilePartInput {
+  type: 'file'
+  mime: string
+  filename?: string
+  url: string
+}
+
 const PROXY_BASE = '/api/opencode'
 
 let sdkPromise: ReturnType<typeof import('@opencode-ai/sdk/client').createOpencodeClient> | null = null
@@ -59,6 +66,28 @@ export async function sendPrompt(
     path: { id: sessionId },
     body: {
       parts: [{ type: 'text' as const, text }],
+      ...(model ? { model: { providerID: model.providerID, modelID: model.modelID } } : {}),
+    },
+  })
+  return result.data!
+}
+
+export async function sendPromptWithFiles(
+  sessionId: string,
+  text: string,
+  system: string,
+  files: FilePartInput[],
+  model?: ModelInfo,
+) {
+  const client = await getClient()
+  const result = await client.session.prompt({
+    path: { id: sessionId },
+    body: {
+      system,
+      parts: [
+        { type: 'text' as const, text },
+        ...files.map((f) => ({ type: 'file' as const, mime: f.mime, filename: f.filename, url: f.url })),
+      ],
       ...(model ? { model: { providerID: model.providerID, modelID: model.modelID } } : {}),
     },
   })
