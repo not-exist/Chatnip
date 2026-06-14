@@ -7,7 +7,7 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url))
 const root = resolve(__dirname, '..')
 const isWin = platform() === 'win32'
 
-console.log('启动 chatnip (vite + opencode)...')
+console.log('启动 chatnip...')
 
 const vite = spawn('npx', ['vite'], {
   cwd: root,
