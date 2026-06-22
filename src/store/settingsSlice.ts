@@ -14,19 +14,21 @@ const defaultOpencodeConfig = {
 }
 
 function loadSettings(): SettingsState {
-  try {
-    const raw = localStorage.getItem('chatnip-settings')
-    if (raw) {
-      return JSON.parse(raw)
-    }
-  } catch { /* ignore */ }
-  return {
+  const defaults: SettingsState = {
     napcat: defaultNapcatConfig,
     opencode: defaultOpencodeConfig,
     defaultMessageCount: 200,
     defaultFeatures: ['summary', 'topics', 'sentiment'],
     defaultModel: undefined,
   }
+  try {
+    const raw = localStorage.getItem('chatnip-settings')
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      return { ...defaults, ...parsed }
+    }
+  } catch { /* ignore */ }
+  return defaults
 }
 
 const initialState: SettingsState = loadSettings()
