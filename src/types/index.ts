@@ -83,8 +83,3 @@ export interface FeatureOption {
   label: string
   description: string
 }
-
-export interface AnalysisResult {
-  sessionId: string
-  text: string
-}
