@@ -1,19 +1,9 @@
-import type { ChatType } from '@/types'
+import type { ChatType, SessionInfo } from '@/types'
 import { saveAppState } from '@/api/appState'
-
-export interface SessionRecord {
-  id: string
-  title: string
-  chatType: ChatType
-  chatId: number
-  chatName: string
-  features: string[]
-  createdAt: number
-}
 
 const STORAGE_KEY = 'chatnip-sessions'
 
-function isValidSessionRecord(v: unknown): v is SessionRecord {
+function isValidSessionRecord(v: unknown): v is SessionInfo {
   if (typeof v !== 'object' || v === null) return false
   const r = v as Record<string, unknown>
   return typeof r.id === 'string' && r.id.length > 0
@@ -25,13 +15,13 @@ function isValidSessionRecord(v: unknown): v is SessionRecord {
     && typeof r.createdAt === 'number' && !Number.isNaN(r.createdAt)
 }
 
-function load(): Record<string, SessionRecord> {
+function load(): Record<string, SessionInfo> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
       if (typeof parsed === 'object' && parsed !== null) {
-        const clean: Record<string, SessionRecord> = {}
+        const clean: Record<string, SessionInfo> = {}
         for (const [key, value] of Object.entries(parsed)) {
           if (isValidSessionRecord(value)) {
             clean[key] = value
@@ -45,12 +35,12 @@ function load(): Record<string, SessionRecord> {
   return {}
 }
 
-function persist(records: Record<string, SessionRecord>) {
+function persist(records: Record<string, SessionInfo>) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(records))
   saveAppState('sessions', records).catch(() => {})
 }
 
-export function registerSession(record: SessionRecord) {
+export function registerSession(record: SessionInfo) {
   const records = load()
   records[record.id] = record
   persist(records)
@@ -70,10 +60,10 @@ export function updateSessionTitle(id: string, title: string) {
   }
 }
 
-export function getRegisteredSessions(): Record<string, SessionRecord> {
+export function getRegisteredSessions(): Record<string, SessionInfo> {
   return load()
 }
 
-export function getRegisteredSession(id: string): SessionRecord | null {
+export function getRegisteredSession(id: string): SessionInfo | null {
   return load()[id] ?? null
 }
