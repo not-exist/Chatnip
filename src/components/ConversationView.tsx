@@ -2,19 +2,14 @@ import { useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { FiUser, FiCpu } from 'react-icons/fi'
-
-interface Message {
-  role: 'user' | 'assistant' | 'system'
-  content: string
-  timestamp?: number
-}
+import type { ChatMessage } from '@/types'
 
 interface ConversationViewProps {
-  messages: Message[]
+  messages: ChatMessage[]
   hideUserMessages?: boolean
 }
 
-function MessageBubble({ msg }: { msg: Message }) {
+function MessageBubble({ msg }: { msg: ChatMessage }) {
   const isUser = msg.role === 'user'
   const timeStr = msg.timestamp
     ? new Date(msg.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })

@@ -12,12 +12,7 @@ import ChatInput from '@/components/ChatInput'
 import { useOpencode } from '@/hooks/useOpencode'
 import { useAppSelector } from '@/store'
 import { parseDimensions } from '@/prompts/analysis'
-
-interface Message {
-  role: 'user' | 'assistant' | 'system'
-  content: string
-  timestamp?: number
-}
+import type { ChatMessage } from '@/types'
 
 export default function SessionDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -39,8 +34,8 @@ export default function SessionDetailPage() {
   const defaultModel = useAppSelector((s) => s.settings.defaultModel)
 
   const { getMessages, sendPrompt } = useOpencode()
-  const [messages, setMessages] = useState<Message[]>([])
-  const [followUpMessages, setFollowUpMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [followUpMessages, setFollowUpMessages] = useState<ChatMessage[]>([])
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(isInitialAnalysis ? false : true)
   const [showFollowUpHistory, setShowFollowUpHistory] = useState(false)
@@ -51,14 +46,14 @@ export default function SessionDetailPage() {
     try {
       const result = await getMessages(sessionId)
       if (result && result.length > 0) {
-        const msgs: Message[] = result.map((m) => {
+        const msgs: ChatMessage[] = result.map((m) => {
           const text =
             m.parts
               ?.filter((p) => p.type === 'text')
               .map((p) => (p as { text: string }).text)
               .join('\n') || ''
           return {
-            role: (m.info.role as Message['role']) || 'assistant',
+            role: (m.info.role as ChatMessage['role']) || 'assistant',
             content: text,
             timestamp: m.info.time?.created,
           }
@@ -84,7 +79,7 @@ export default function SessionDetailPage() {
   }
 
   const handleSend = async (text: string) => {
-    const userMsg: Message = { role: 'user', content: text, timestamp: Date.now() }
+    const userMsg: ChatMessage = { role: 'user', content: text, timestamp: Date.now() }
 
     if (isInitialAnalysis) {
       setFollowUpMessages((prev) => [...prev, userMsg])
@@ -103,7 +98,7 @@ export default function SessionDetailPage() {
           .map((p) => (p as { text: string }).text)
           .join('\n') || ''
 
-      const assistantMsg: Message = {
+      const assistantMsg: ChatMessage = {
         role: 'assistant',
         content: assistantText,
         timestamp: Date.now(),
