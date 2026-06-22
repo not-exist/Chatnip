@@ -16,6 +16,7 @@ export default tseslint.config(
       'react-hooks/exhaustive-deps': 'warn',
       'react-refresh/only-export-components': 'warn',
     },
+    files: ['**/*.{tsx,jsx}'],
   },
   {
     ignores: ['dist/', 'node_modules/', '.playwright-mcp/'],
