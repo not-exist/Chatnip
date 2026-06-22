@@ -13,8 +13,8 @@ function SkeletonCard() {
     <div className="flex items-center gap-4 p-4 rounded-xl border border-default-100/60">
       <div className="w-11 h-11 rounded-xl skeleton" />
       <div className="flex-1 space-y-2">
-        <div className="h-4 w-40 skeleton rounded" />
-        <div className="h-3 w-24 skeleton rounded" />
+        <div className="h-4 w-40 skeleton rounded-sm" />
+        <div className="h-3 w-24 skeleton rounded-sm" />
       </div>
       <div className="h-6 w-14 skeleton rounded-full" />
     </div>
@@ -91,7 +91,7 @@ export default function ChatListPage() {
         onValueChange={setSearch}
         isClearable
         startContent={<FiSearch className="text-default-400" />}
-        classNames={{ inputWrapper: 'rounded-xl shadow-sm' }}
+        classNames={{ inputWrapper: 'rounded-xl shadow-xs' }}
         className="max-w-md"
       />
 

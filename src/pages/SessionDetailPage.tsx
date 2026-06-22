@@ -169,7 +169,7 @@ export default function SessionDetailPage() {
                 key={dim.key}
                 type="button"
                 onClick={() => scrollToDimension(dim.key)}
-                className="flex-shrink-0"
+                className="shrink-0"
               >
                 <Chip
                   size="sm"
@@ -212,7 +212,7 @@ export default function SessionDetailPage() {
         {isInitialAnalysis && (
           <div className="flex items-center gap-3">
             <Divider className="flex-1" />
-            <span className="text-xs text-default-400 font-medium flex-shrink-0">
+            <span className="text-xs text-default-400 font-medium shrink-0">
               追问
             </span>
             <Divider className="flex-1" />

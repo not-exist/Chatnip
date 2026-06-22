@@ -348,7 +348,7 @@ export default function NewAnalysisPage() {
       <Button
         color="primary"
         size="lg"
-        className="w-full h-12 rounded-2xl font-semibold text-base bg-gradient-to-r from-primary-400 to-primary-500 shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-px"
+        className="w-full h-12 rounded-2xl font-semibold text-base bg-gradient-to-r from-primary-400 to-primary-500 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-px"
         isLoading={loading}
         isDisabled={!dateRange?.from}
         onPress={handleStartAnalysis}

@@ -12,13 +12,13 @@ function SkeletonSession() {
   return (
     <div className="p-5 rounded-xl border border-default-100/60 space-y-3">
       <div className="flex justify-between">
-        <div className="h-5 w-48 skeleton rounded" />
+        <div className="h-5 w-48 skeleton rounded-sm" />
         <div className="flex gap-2">
           <div className="h-8 w-16 skeleton rounded-lg" />
           <div className="h-8 w-8 skeleton rounded-lg" />
         </div>
       </div>
-      <div className="h-3 w-64 skeleton rounded" />
+      <div className="h-3 w-64 skeleton rounded-sm" />
       <div className="flex gap-2">
         <div className="h-6 w-16 skeleton rounded-full" />
         <div className="h-6 w-20 skeleton rounded-full" />
@@ -107,7 +107,7 @@ export default function SessionsPage() {
         onValueChange={setSearch}
         isClearable
         startContent={<FiSearch className="text-default-400" />}
-        classNames={{ inputWrapper: 'rounded-xl shadow-sm' }}
+        classNames={{ inputWrapper: 'rounded-xl shadow-xs' }}
         className="max-w-md"
       />
 

@@ -37,7 +37,7 @@ export default function AnalysisFeatureSelector({
             }}
           >
             <span className="flex items-center gap-2">
-              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotColor}`} />
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
               <span className="font-medium">{feature.label}</span>
             </span>
             <span className="text-xs text-default-500 ml-[20px]">{feature.description}</span>

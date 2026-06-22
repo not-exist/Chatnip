@@ -22,7 +22,7 @@ function MessageBubble({ msg }: { msg: Message }) {
 
   return (
     <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
-      <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs ${
+      <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs ${
         isUser
           ? 'bg-gradient-to-br from-primary-400 to-primary-500 text-white'
           : 'bg-default-200 text-default-600'
@@ -42,7 +42,7 @@ function MessageBubble({ msg }: { msg: Message }) {
             <div className="prose prose-sm dark:prose-invert max-w-none
               prose-p:my-1
               prose-headings:mt-3 prose-headings:mb-1
-              prose-code:bg-default-200 prose-code:px-1 prose-code:rounded
+              prose-code:bg-default-200 prose-code:px-1 prose-code:rounded-sm
               prose-code:before:content-none prose-code:after:content-none
               prose-table:border-collapse prose-table:w-full prose-table:text-xs
               prose-th:border prose-th:border-default-300 prose-th:bg-default-100 prose-th:px-2 prose-th:py-1.5

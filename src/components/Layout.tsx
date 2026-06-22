@@ -20,7 +20,7 @@ export default function Layout() {
       <Navbar maxWidth="xl" position="sticky" className="nav-glass">
         <NavbarBrand>
           <Link to="/chats" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-400 to-primary-500 flex items-center justify-center shadow-sm">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-400 to-primary-500 flex items-center justify-center shadow-xs">
               <FiMessageCircle className="text-white text-base" />
             </div>
             <span className="text-lg font-bold bg-gradient-to-r from-primary-500 to-primary-400 bg-clip-text text-transparent">

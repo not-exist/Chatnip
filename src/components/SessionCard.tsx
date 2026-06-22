@@ -34,7 +34,7 @@ export default function SessionCard({ session, onView, onDelete }: SessionCardPr
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between px-5 pt-4 pb-2">
             <h3 className="font-semibold text-base truncate flex-1 mr-4">{session.title}</h3>
-            <div className="flex-shrink-0 flex gap-1.5">
+            <div className="shrink-0 flex gap-1.5">
               <Button
                 size="sm"
                 variant="flat"

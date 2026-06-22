@@ -40,7 +40,7 @@ export default function DimensionCard({
       <CardHeader className="flex items-center justify-between gap-3 px-5 py-3.5">
         <div className="flex items-center gap-2.5 min-w-0">
           <span
-            className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${dotColor}`}
+            className={`w-2.5 h-2.5 rounded-full shrink-0 ${dotColor}`}
           />
           <span className="font-semibold text-sm truncate">
             {dimension.label}
@@ -51,7 +51,7 @@ export default function DimensionCard({
           size="sm"
           isIconOnly
           onPress={() => setExpanded((prev) => !prev)}
-          className="flex-shrink-0 rounded-lg"
+          className="shrink-0 rounded-lg"
           aria-label={expanded ? '收起' : '展开'}
         >
           {expanded ? (
@@ -67,7 +67,7 @@ export default function DimensionCard({
             className="prose prose-sm dark:prose-invert max-w-none
               prose-p:my-1.5 prose-p:leading-7
               prose-headings:mt-4 prose-headings:mb-2
-              prose-code:bg-default-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+              prose-code:bg-default-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm
               prose-code:before:content-none prose-code:after:content-none
               prose-table:border-collapse prose-table:w-full prose-table:text-xs
               prose-th:border prose-th:border-default-300 prose-th:bg-default-100 prose-th:px-2 prose-th:py-1.5
