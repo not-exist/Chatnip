@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import ChatCard from '@/components/ChatCard'
 import { useNapcatApi } from '@/hooks/useNapcatApi'
 import { FiMessageSquare, FiSearch } from 'react-icons/fi'
+import EmptyState from '@/components/EmptyState'
 import type { GroupInfo, FriendInfo, ChatType } from '@/types'
 
 function SkeletonCard() {
@@ -21,17 +22,6 @@ function SkeletonCard() {
   )
 }
 
-function EmptyState({ icon: Icon, title, desc }: { icon: React.ComponentType<{ className?: string }>; title: string; desc: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-default-400">
-      <div className="w-16 h-16 rounded-2xl bg-default-100 flex items-center justify-center mb-5">
-        <Icon className="text-3xl opacity-50" />
-      </div>
-      <p className="text-base font-medium text-default-600 mb-1.5">{title}</p>
-      <p className="text-sm">{desc}</p>
-    </div>
-  )
-}
 
 export default function ChatListPage() {
   const navigate = useNavigate()
@@ -109,7 +99,7 @@ export default function ChatListPage() {
               <EmptyState
                 icon={FiMessageSquare}
                 title={groups.length === 0 ? '暂无群聊' : '无匹配结果'}
-                desc={groups.length === 0 ? '请检查 NapCat 连接配置' : '尝试修改搜索条件'}
+                description={groups.length === 0 ? '请检查 NapCat 连接配置' : '尝试修改搜索条件'}
               />
             )}
             {!loading && filteredGroups.map((g) => (
@@ -131,7 +121,7 @@ export default function ChatListPage() {
               <EmptyState
                 icon={FiMessageSquare}
                 title={friends.length === 0 ? '暂无好友' : '无匹配结果'}
-                desc={friends.length === 0 ? '请检查 NapCat 连接配置' : '尝试修改搜索条件'}
+                description={friends.length === 0 ? '请检查 NapCat 连接配置' : '尝试修改搜索条件'}
               />
             )}
             {!loading && filteredFriends.map((f) => (
