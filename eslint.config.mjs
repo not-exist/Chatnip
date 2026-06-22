@@ -20,4 +20,17 @@ export default tseslint.config(
   {
     ignores: ['dist/', 'node_modules/', '.playwright-mcp/'],
   },
+  {
+    files: ['**/__tests__/**'],
+    languageOptions: {
+      globals: {
+        describe: 'readonly',
+        it: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        vi: 'readonly',
+      },
+    },
+  },
 )
