@@ -72,8 +72,9 @@ export default function SessionDetailPage() {
   }, [isInitialAnalysis, loadFromOpencode])
 
   useEffect(() => {
+    const refs = cardRefs.current
     return () => {
-      cardRefs.current.clear()
+      refs.clear()
     }
   }, [dimensions])
 

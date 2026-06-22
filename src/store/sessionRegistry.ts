@@ -1,4 +1,4 @@
-import type { ChatType, SessionInfo } from '@/types'
+import type { SessionInfo } from '@/types'
 import { saveAppState } from '@/api/appState'
 
 const STORAGE_KEY = 'chatnip-sessions'
