@@ -24,9 +24,9 @@ export default function DateRangePicker({ value, onChange }: DateRangePickerProp
     <div className="relative">
       <button
         type="button"
-        className="w-full flex items-center gap-2.5 px-4 py-3 rounded-xl border border-default-200
+        className={`w-full flex items-center gap-2.5 px-4 py-3 rounded-xl border border-default-200
           bg-default-50 hover:bg-default-100 hover:border-default-300 transition-all duration-150 text-left
-          dark:bg-default-100 dark:hover:bg-default-200 dark:border-default-400"
+          dark:bg-default-100 dark:hover:bg-default-200 dark:border-default-400${value?.from ? ' pr-10' : ''}`}
         onClick={() => setOpen(!open)}
       >
         <svg className="w-5 h-5 text-default-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -36,29 +36,22 @@ export default function DateRangePicker({ value, onChange }: DateRangePickerProp
         <span className={value?.from ? 'text-foreground font-medium' : 'text-default-400'}>
           {label}
         </span>
-        {value?.from && (
-          <span
-            role="button"
-            tabIndex={0}
-            className="ml-auto p-1 rounded-lg hover:bg-default-200 transition-colors cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation()
-              onChange(undefined)
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                e.stopPropagation()
-                onChange(undefined)
-              }
-            }}
-          >
-            <svg className="w-4 h-4 text-default-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </span>
-        )}
       </button>
+      {value?.from && (
+        <button
+          type="button"
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-default-200 transition-colors z-10"
+          onClick={(e) => {
+            e.stopPropagation()
+            onChange(undefined)
+          }}
+          aria-label="清除日期"
+        >
+          <svg className="w-4 h-4 text-default-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      )}
       {open && (
         <div className="absolute z-50 mt-2 p-3 rounded-xl border border-default-200 bg-background shadow-xl
           dark:bg-default-100 dark:border-default-500 animate-fade-in">
