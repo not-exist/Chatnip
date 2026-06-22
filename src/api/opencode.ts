@@ -16,6 +16,7 @@ async function getClient() {
   const { createOpencodeClient } = await import('@opencode-ai/sdk/client')
   sdkPromise = createOpencodeClient({
     baseUrl: PROXY_BASE,
+    throwOnError: true,
   })
   Promise.resolve(sdkPromise).catch(() => { sdkPromise = null })
   return sdkPromise
@@ -103,7 +104,7 @@ export async function updateSessionTitle(id: string, title: string) {
 export async function testOpencodeConnection(): Promise<boolean> {
   try {
     const client = await getClient()
-    await client.session.list()
+    await client.provider.list()
     return true
   } catch {
     return false
