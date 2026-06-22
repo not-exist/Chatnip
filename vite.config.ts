@@ -292,10 +292,12 @@ function chatnipPlugin() {
             }
             // Wait for process to exit
             await new Promise<void>((resolve) => {
-              const check = setInterval(() => {
-                if (opencodeProc?.killed) { clearInterval(check); resolve() }
-              }, 200)
-              setTimeout(() => { clearInterval(check); resolve() }, 5000)
+              if (opencodeProc?.exitCode !== null) {
+                resolve()
+                return
+              }
+              opencodeProc?.once('exit', () => resolve())
+              setTimeout(resolve, 5000)
             })
           }
 
@@ -465,7 +467,7 @@ function chatnipPlugin() {
       // AI stream endpoint (skeleton)
       server.middlewares.use(async (req, res, next) => {
         if (req.method === 'POST' && req.url === '/api/ai/stream') {
-          res.statusCode = 200
+          res.statusCode = 501
           res.setHeader('content-type', 'application/json')
           res.end(JSON.stringify({ status: 'not implemented' }))
           return
@@ -476,7 +478,7 @@ function chatnipPlugin() {
       // AI ask endpoint (skeleton)
       server.middlewares.use(async (req, res, next) => {
         if (req.method === 'POST' && req.url === '/api/ai/ask') {
-          res.statusCode = 200
+          res.statusCode = 501
           res.setHeader('content-type', 'application/json')
           res.end(JSON.stringify({ status: 'not implemented' }))
           return
