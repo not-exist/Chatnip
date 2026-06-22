@@ -288,6 +288,7 @@ export default function NewAnalysisPage() {
             <label className="text-sm font-medium text-default-700">AI 模型</label>
             <div className="flex gap-2">
               <Select
+                aria-label="选择 provider"
                 placeholder="选择 provider"
                 selectedKeys={selectedModel?.providerID ? [selectedModel.providerID] : []}
                 onSelectionChange={(keys) =>
@@ -303,12 +304,13 @@ export default function NewAnalysisPage() {
                 ))}
               </Select>
               {currentProvider && (
-                <Select
-                  placeholder="选择模型"
-                  selectedKeys={selectedModel?.modelID ? [selectedModel.modelID] : []}
-                  onSelectionChange={(keys) =>
-                    handleModelChange(Array.from(keys as Set<string>)[0] || '')
-                  }
+                  <Select
+                      aria-label="选择模型"
+                      placeholder="选择模型"
+                      selectedKeys={selectedModel?.modelID ? [selectedModel.modelID] : []}
+                      onSelectionChange={(keys) =>
+                        handleModelChange(Array.from(keys as Set<string>)[0] || '')
+                      }
                   size="sm"
                   className="max-w-[300px]"
                   classNames={{ trigger: 'rounded-xl' }}
