@@ -253,7 +253,7 @@ export default function NewAnalysisPage() {
         </div>
       </div>
 
-      <Card className="card-enhanced">
+      <Card className="border border-gray-200/60 dark:border-white/10 shadow-sm transition-all duration-200 hover:border-gray-300 dark:hover:border-white/20 hover:shadow-md hover:-translate-y-px">
         <SectionHeader icon={FiInfo} title="会话信息" variant="primary" />
         <Separator />
         <Card.Content className="space-y-3 py-4">
@@ -274,7 +274,7 @@ export default function NewAnalysisPage() {
         </Card.Content>
       </Card>
 
-      <Card className="card-enhanced">
+      <Card className="border border-gray-200/60 dark:border-white/10 shadow-sm transition-all duration-200 hover:border-gray-300 dark:hover:border-white/20 hover:shadow-md hover:-translate-y-px">
         <SectionHeader icon={FiSliders} title="分析参数" variant="secondary" />
         <Separator />
         <Card.Content className="space-y-6 py-4">
@@ -343,7 +343,7 @@ export default function NewAnalysisPage() {
       <Button
         variant="primary"
         size="lg"
-        className="w-full h-12 rounded-2xl font-semibold text-base bg-gradient-to-r from-primary-400 to-primary-500 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-px"
+        className="w-full h-12 rounded-2xl font-semibold text-base bg-gradient-to-r from-rose-400 to-rose-500 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-px"
         isPending={loading}
         isDisabled={!dateRange?.from}
         onPress={handleStartAnalysis}

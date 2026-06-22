@@ -102,14 +102,15 @@ export default function SettingsPage() {
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">配置 NapCat 与 Opencode 连接</p>
       </div>
 
-      <Card className="card-enhanced">
+      <Card className="border border-gray-200/60 dark:border-white/10 shadow-sm transition-all duration-200 hover:border-gray-300 dark:hover:border-white/20 hover:shadow-md hover:-translate-y-px">
         <SectionHeader icon={FiServer} title="NapCat 连接配置" variant="primary" />
         <Separator />
         <Card.Content className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">主机地址</label>
+              <label htmlFor="napcat-host" className="text-sm font-medium text-gray-700 dark:text-gray-300">主机地址</label>
               <Input
+                id="napcat-host"
                 value={napcat.host}
                 onChange={(e) => dispatch(setNapcatConfig({ host: e.target.value }))}
                 placeholder="127.0.0.1"
@@ -117,8 +118,9 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">端口</label>
+              <label htmlFor="napcat-port" className="text-sm font-medium text-gray-700 dark:text-gray-300">端口</label>
               <Input
+                id="napcat-port"
                 type="number"
                 value={String(napcat.port)}
                 onChange={(e) => dispatch(setNapcatConfig({ port: Number(e.target.value) || 3000 }))}
@@ -128,8 +130,9 @@ export default function SettingsPage() {
             </div>
           </div>
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Token (可选)</label>
+            <label htmlFor="napcat-token" className="text-sm font-medium text-gray-700 dark:text-gray-300">Token (可选)</label>
             <Input
+              id="napcat-token"
               value={napcat.token}
               onChange={(e) => dispatch(setNapcatConfig({ token: e.target.value }))}
               placeholder="Bearer token"
@@ -148,7 +151,7 @@ export default function SettingsPage() {
         </Card.Content>
       </Card>
 
-      <Card className="card-enhanced">
+      <Card className="border border-gray-200/60 dark:border-white/10 shadow-sm transition-all duration-200 hover:border-gray-300 dark:hover:border-white/20 hover:shadow-md hover:-translate-y-px">
         <SectionHeader icon={FiCpu} title="Opencode 连接配置" variant="secondary" />
         <Separator />
         <Card.Content className="space-y-4 py-4">
@@ -157,8 +160,9 @@ export default function SettingsPage() {
           </p>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">主机地址</label>
+              <label htmlFor="opencode-host" className="text-sm font-medium text-gray-700 dark:text-gray-300">主机地址</label>
               <Input
+                id="opencode-host"
                 value={opencode.host}
                 onChange={(e) => dispatch(setOpencodeConfig({ host: e.target.value }))}
                 placeholder="127.0.0.1"
@@ -166,8 +170,9 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">端口</label>
+              <label htmlFor="opencode-port" className="text-sm font-medium text-gray-700 dark:text-gray-300">端口</label>
               <Input
+                id="opencode-port"
                 type="number"
                 value={String(opencode.port)}
                 onChange={(e) => dispatch(setOpencodeConfig({ port: Number(e.target.value) || 4096 }))}
@@ -198,7 +203,7 @@ export default function SettingsPage() {
         </Card.Content>
       </Card>
 
-      <Card className="card-enhanced">
+      <Card className="border border-gray-200/60 dark:border-white/10 shadow-sm transition-all duration-200 hover:border-gray-300 dark:hover:border-white/20 hover:shadow-md hover:-translate-y-px">
         <SectionHeader icon={FiSettings} title="默认分析设置" variant="default" />
         <Separator />
         <Card.Content className="space-y-6 py-4">
@@ -210,8 +215,9 @@ export default function SettingsPage() {
           ) : (
             <div className="space-y-4 max-w-md">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">AI 模型</label>
+                <label htmlFor="default-provider" className="text-sm font-medium text-gray-700 dark:text-gray-300">AI 模型</label>
                 <Select
+                  id="default-provider"
                   placeholder={providers.length === 0 ? '未检测到可用模型（使用 opencode 默认）' : '选择 provider'}
                   value={selectedProviderId}
                   onChange={(key) => handleProviderChange(String(key))}
@@ -233,13 +239,14 @@ export default function SettingsPage() {
               </div>
               {currentProvider && (
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">模型</label>
-                  <Select
-                    placeholder="选择具体模型"
-                    value={selectedModelId}
-                    onChange={(key) => handleModelChange(String(key))}
-                    className="rounded-xl"
-                  >
+                    <label htmlFor="default-model" className="text-sm font-medium text-gray-700 dark:text-gray-300">模型</label>
+                    <Select
+                      id="default-model"
+                      placeholder="选择具体模型"
+                      value={selectedModelId}
+                      onChange={(key) => handleModelChange(String(key))}
+                      className="rounded-xl"
+                    >
                     <Select.Trigger>
                       <Select.Value />
                       <Select.Indicator />
@@ -256,7 +263,7 @@ export default function SettingsPage() {
               )}
               {defaultModel && (
                 <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                   当前默认: {defaultModel.name}
                 </div>
               )}
