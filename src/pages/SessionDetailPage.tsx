@@ -120,9 +120,17 @@ export default function SessionDetailPage() {
     } catch {
       toast.error('发送失败')
       if (isInitialAnalysis) {
-        setFollowUpMessages((prev) => prev.slice(0, -1))
+        setFollowUpMessages((prev) => {
+          if (prev.length === 0) return prev
+          if (prev[prev.length - 1].role !== 'user') return prev
+          return prev.slice(0, -1)
+        })
       } else {
-        setMessages((prev) => prev.slice(0, -1))
+        setMessages((prev) => {
+          if (prev.length === 0) return prev
+          if (prev[prev.length - 1].role !== 'user') return prev
+          return prev.slice(0, -1)
+        })
       }
     } finally {
       sendingRef.current = false
