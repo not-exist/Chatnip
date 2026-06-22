@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
-import { Card, CardBody } from '@heroui/card'
-import { Button } from '@heroui/button'
-import { Divider } from '@heroui/divider'
-import { Spinner } from '@heroui/spinner'
-import { Select, SelectItem } from '@heroui/select'
+import { Card, Button, Separator, Spinner, Select, ListBox } from '@heroui/react'
 import { FiArrowLeft, FiInfo, FiSliders, FiZap } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import AnalysisFeatureSelector from '@/components/AnalysisFeatureSelector'
@@ -245,8 +241,7 @@ export default function NewAnalysisPage() {
     <div className="space-y-6 max-w-2xl">
       <div className="flex items-center gap-3">
         <Button
-          variant="light"
-          isIconOnly
+          variant="ghost"
           onPress={() => navigate(-1)}
           className="rounded-xl"
         >
@@ -254,105 +249,112 @@ export default function NewAnalysisPage() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold">分析配置</h1>
-          <p className="text-sm text-default-500 mt-0.5">配置分析参数，开始 AI 分析</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">配置分析参数，开始 AI 分析</p>
         </div>
       </div>
 
-      <Card className="card-enhanced">
+      <Card className="border border-gray-200/60 dark:border-white/10 shadow-sm transition-all duration-200 hover:border-gray-300 dark:hover:border-white/20 hover:shadow-md hover:-translate-y-px">
         <SectionHeader icon={FiInfo} title="会话信息" variant="primary" />
-        <Divider />
-        <CardBody className="space-y-3 py-4">
+        <Separator />
+        <Card.Content className="space-y-3 py-4">
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
-              <span className="text-default-400 text-xs">类型</span>
+              <span className="text-gray-400 text-xs">类型</span>
               <p className="font-medium mt-0.5">{chatType === 'group' ? '群聊' : '私聊'}</p>
             </div>
             <div>
-              <span className="text-default-400 text-xs">名称</span>
+              <span className="text-gray-400 text-xs">名称</span>
               <p className="font-medium mt-0.5 truncate">{chatName}</p>
             </div>
             <div>
-              <span className="text-default-400 text-xs">ID</span>
+              <span className="text-gray-400 text-xs">ID</span>
               <p className="font-medium mt-0.5 font-mono text-xs">{chatId}</p>
             </div>
           </div>
-        </CardBody>
+        </Card.Content>
       </Card>
 
-      <Card className="card-enhanced">
+      <Card className="border border-gray-200/60 dark:border-white/10 shadow-sm transition-all duration-200 hover:border-gray-300 dark:hover:border-white/20 hover:shadow-md hover:-translate-y-px">
         <SectionHeader icon={FiSliders} title="分析参数" variant="secondary" />
-        <Divider />
-        <CardBody className="space-y-6 py-4">
+        <Separator />
+        <Card.Content className="space-y-6 py-4">
           <div className="space-y-2.5">
-            <label className="text-sm font-medium text-default-700">AI 模型</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">AI 模型</label>
             <div className="flex gap-2">
               <Select
                 aria-label="选择 provider"
                 placeholder="选择 provider"
-                selectedKeys={selectedModel?.providerID ? [selectedModel.providerID] : []}
-                onSelectionChange={(keys) =>
-                  handleProviderChange(Array.from(keys as Set<string>)[0] || '')
-                }
-                size="sm"
-                className="max-w-[200px]"
+                value={selectedModel?.providerID}
+                onChange={(key) => handleProviderChange(String(key))}
+                className="max-w-[200px] rounded-xl text-sm"
                 isDisabled={providers.length === 0}
-                classNames={{ trigger: 'rounded-xl' }}
               >
-                {providers.map((p) => (
-                  <SelectItem key={p.id}>{p.name}</SelectItem>
-                ))}
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {providers.map((p) => (
+                      <ListBox.Item key={p.id} id={p.id} textValue={p.name}>{p.name}</ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
               </Select>
               {currentProvider && (
-                  <Select
-                      aria-label="选择模型"
-                      placeholder="选择模型"
-                      selectedKeys={selectedModel?.modelID ? [selectedModel.modelID] : []}
-                      onSelectionChange={(keys) =>
-                        handleModelChange(Array.from(keys as Set<string>)[0] || '')
-                      }
-                  size="sm"
-                  className="max-w-[300px]"
-                  classNames={{ trigger: 'rounded-xl' }}
+                <Select
+                  aria-label="选择模型"
+                  placeholder="选择模型"
+                  value={selectedModel?.modelID}
+                  onChange={(key) => handleModelChange(String(key))}
+                  className="max-w-[300px] rounded-xl text-sm"
                 >
-                  {modelOptions.map((m) => (
-                    <SelectItem key={m.key}>{m.name}</SelectItem>
-                  ))}
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {modelOptions.map((m) => (
+                        <ListBox.Item key={m.key} id={m.key} textValue={m.name}>{m.name}</ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
                 </Select>
               )}
             </div>
             {providers.length === 0 && (
-              <p className="text-xs text-default-400">未检测到可用模型，将使用 opencode 默认模型</p>
+              <p className="text-xs text-gray-400">未检测到可用模型，将使用 opencode 默认模型</p>
             )}
           </div>
 
           <div className="space-y-2.5">
-            <label className="text-sm font-medium text-default-700">日期范围</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">日期范围</label>
             <DateRangePicker value={dateRange} onChange={setDateRange} />
-            <p className="text-xs text-default-400">
+            <p className="text-xs text-gray-400">
               选择要分析的聊天记录日期范围，将拉取该范围内所有消息
             </p>
           </div>
 
           <AnalysisFeatureSelector selected={features} onChange={setFeatures} />
-        </CardBody>
+        </Card.Content>
       </Card>
 
       <Button
-        color="primary"
+        variant="primary"
         size="lg"
-        className="w-full h-12 rounded-2xl font-semibold text-base bg-gradient-to-r from-primary-400 to-primary-500 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-px"
-        isLoading={loading}
+        className="w-full h-12 rounded-2xl font-semibold text-base bg-gradient-to-r from-rose-400 to-rose-500 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-px"
+        isPending={loading}
         isDisabled={!dateRange?.from}
         onPress={handleStartAnalysis}
-        startContent={!loading ? <FiZap /> : undefined}
       >
-        {loading ? status : '开始分析'}
+        {loading ? status : <><FiZap className="mr-2" />开始分析</>}
       </Button>
 
       {loading && (
         <div className="flex flex-col items-center gap-4 py-8">
-          <Spinner size="lg" color="primary" />
-          <p className="text-default-500 text-sm">{status}</p>
+          <Spinner size="lg" color="accent" />
+          <p className="text-gray-500 text-sm">{status}</p>
         </div>
       )}
     </div>

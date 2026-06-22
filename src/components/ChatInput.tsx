@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Input } from '@heroui/input'
-import { Button } from '@heroui/button'
+import { Input, Button } from '@heroui/react'
 import { FiSend } from 'react-icons/fi'
 
 interface ChatInputProps {
@@ -31,7 +30,7 @@ export default function ChatInput({ onSend, disabled, placeholder = '输入追�
       <Input
         ref={inputRef}
         value={text}
-        onValueChange={setText}
+        onChange={(e) => setText(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
         onKeyDown={(e) => {
@@ -40,17 +39,13 @@ export default function ChatInput({ onSend, disabled, placeholder = '输入追�
             handleSend()
           }
         }}
-        classNames={{
-          inputWrapper: 'rounded-2xl h-12 shadow-xs border-default-200',
-        }}
-        className="flex-1"
+        className="flex-1 h-12 rounded-2xl"
       />
       <Button
-        color="primary"
-        isIconOnly
+        variant="primary"
         isDisabled={disabled || !text.trim()}
         onPress={handleSend}
-        className="rounded-xl h-12 w-12 bg-gradient-to-r from-primary-400 to-primary-500 shadow-xs hover:shadow-sm transition-all duration-200 hover:-translate-y-px"
+        className="rounded-xl h-12 w-12 bg-gradient-to-r from-rose-400 to-rose-500 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-px"
       >
         <FiSend />
       </Button>

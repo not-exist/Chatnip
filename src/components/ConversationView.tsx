@@ -21,8 +21,8 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
     <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
       <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs ${
         isUser
-          ? 'bg-gradient-to-br from-primary-400 to-primary-500 text-white'
-          : 'bg-default-200 text-default-600'
+? 'bg-gradient-to-br from-rose-400 to-rose-500 text-white'
+: 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
       }`}>
         {isUser ? <FiUser /> : <FiCpu />}
       </div>
@@ -39,12 +39,12 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
             <div className="prose prose-sm dark:prose-invert max-w-none
               prose-p:my-1
               prose-headings:mt-3 prose-headings:mb-1
-              prose-code:bg-default-200 prose-code:px-1 prose-code:rounded-sm
+              prose-code:bg-gray-100 dark:prose-code:bg-gray-800 prose-code:px-1 prose-code:rounded-sm
               prose-code:before:content-none prose-code:after:content-none
               prose-table:border-collapse prose-table:w-full prose-table:text-xs
-              prose-th:border prose-th:border-default-300 prose-th:bg-default-100 prose-th:px-2 prose-th:py-1.5
-              prose-td:border prose-td:border-default-300 prose-td:px-2 prose-td:py-1.5
-              prose-blockquote:border-l-primary prose-blockquote:bg-default-50/60 prose-blockquote:py-1 prose-blockquote:px-3 prose-blockquote:not-italic
+prose-th:border prose-th:border-gray-300 dark:prose-th:border-gray-600 prose-th:bg-gray-100 dark:prose-th:bg-gray-800 prose-th:px-2 prose-th:py-1.5
+prose-td:border prose-td:border-gray-300 dark:prose-td:border-gray-600 prose-td:px-2 prose-td:py-1.5
+prose-blockquote:border-l-rose-500 prose-blockquote:bg-gray-50/60 dark:prose-blockquote:bg-gray-800/40 prose-blockquote:py-1 prose-blockquote:px-3 prose-blockquote:not-italic
               prose-li:my-0.5
             ">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -54,7 +54,7 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
           )}
         </div>
         {timeStr && (
-          <span className="text-[11px] text-default-400 mt-1 px-1">{timeStr}</span>
+          <span className="text-[11px] text-gray-400 dark:text-gray-500 mt-1 px-1">{timeStr}</span>
         )}
       </div>
     </div>
@@ -74,7 +74,7 @@ export default function ConversationView({ messages, hideUserMessages = false }:
 
   if (displayMessages.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-default-400">
+      <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
         <FiCpu className="text-4xl mb-4 opacity-40" />
         <p className="text-sm">暂无消息</p>
       </div>

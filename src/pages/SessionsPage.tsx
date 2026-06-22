@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Input } from '@heroui/input'
-import { Button } from '@heroui/button'
-import { FiRefreshCw, FiSearch, FiFileText } from 'react-icons/fi'
+import { Input, Button } from '@heroui/react'
+import { FiRefreshCw, FiFileText } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import SessionCard from '@/components/SessionCard'
 import EmptyState from '@/components/EmptyState'
@@ -11,7 +10,7 @@ import type { SessionInfo } from '@/types'
 
 function SkeletonSession() {
   return (
-    <div className="p-5 rounded-xl border border-default-100/60 space-y-3">
+    <div className="p-5 rounded-xl border border-gray-200/60 dark:border-white/10 space-y-3">
       <div className="flex justify-between">
         <div className="h-5 w-48 skeleton rounded-sm" />
         <div className="flex gap-2">
@@ -73,15 +72,15 @@ export default function SessionsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">分析历史</h1>
-          <p className="text-sm text-default-500 mt-1">查看和管理历史分析结果</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">查看和管理历史分析结果</p>
         </div>
         <Button
-          variant="flat"
+          variant="tertiary"
           size="sm"
-          startContent={<FiRefreshCw />}
           onPress={loadSessions}
           className="rounded-xl"
         >
+          <FiRefreshCw className="mr-1" />
           刷新
         </Button>
       </div>
@@ -89,11 +88,8 @@ export default function SessionsPage() {
       <Input
         placeholder="搜索分析记录..."
         value={search}
-        onValueChange={setSearch}
-        isClearable
-        startContent={<FiSearch className="text-default-400" />}
-        classNames={{ inputWrapper: 'rounded-xl shadow-xs' }}
-        className="max-w-md"
+        onChange={(e) => setSearch(e.target.value)}
+        className="max-w-md rounded-xl"
       />
 
       {loading && (

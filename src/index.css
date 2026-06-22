@@ -1,5 +1,6 @@
 @import "tailwindcss";
-@config "../tailwind.config.js";
+@import "@heroui/styles";
+@plugin "@tailwindcss/typography";
 @custom-variant dark (&:is(.dark *));
 
 @theme {
@@ -78,37 +79,6 @@
   background: radial-gradient(circle, rgba(136, 192, 208, 0.04) 0%, transparent 70%);
 }
 
-/* ---- 卡片 ---- */
-.card-enhanced {
-  @apply border border-default-100/60 shadow-xs;
-  backdrop-filter: blur(4px);
-  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-}
-
-.card-enhanced:hover {
-  @apply border-default-200 shadow-sm;
-  transform: translateY(-1px);
-}
-
-.card-accent {
-  @apply relative overflow-hidden;
-}
-
-.card-accent::before {
-  content: '';
-  @apply absolute top-0 left-0 h-full w-1 bg-gradient-to-b from-primary-400 to-primary-300 rounded-l-lg;
-}
-
-/* ---- 导航 ---- */
-.nav-glass {
-  backdrop-filter: saturate(180%) blur(12px);
-  @apply bg-background/75 border-b border-primary-200/30;
-}
-
-.dark .nav-glass {
-  @apply bg-background/70 border-b border-primary-800/30;
-}
-
 /* ---- 页面进入动画 ---- */
 .page-enter {
   animation: page-enter 0.35s ease-out both;
@@ -119,27 +89,32 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ---- 聊天气泡（简化版，后续用 v3 token 完善）---- */
+.bubble-user {
+  background: linear-gradient(to bottom right, oklch(0.65 0.25 10), oklch(0.55 0.28 10));
+  color: white;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.bubble-ai {
+  background: oklch(0.97 0.005 285);
+  border: 1px solid oklch(0.92 0.005 285);
+}
+
+.dark .bubble-ai {
+  background: oklch(0.25 0.01 285);
+  border-color: oklch(0.35 0.01 285);
+}
+
 /* ---- 骨架屏 ---- */
 .skeleton {
-  @apply bg-default-200 rounded-lg;
+  background: oklch(0.93 0.005 285);
+  border-radius: 0.5rem;
   animation: skeleton-pulse 1.8s ease-in-out infinite;
 }
 
 .dark .skeleton {
-  @apply bg-default-200/40;
-}
-
-/* ---- 聊天气泡 ---- */
-.bubble-user {
-  @apply bg-gradient-to-br from-primary-400 to-primary-500 text-white shadow-xs;
-}
-
-.bubble-ai {
-  @apply bg-default-100 border border-default-200/60;
-}
-
-.dark .bubble-ai {
-  @apply bg-default-100/50 border-default-200/30;
+  background: oklch(0.3 0.005 285);
 }
 
 /* ---- 滚动条 ---- */
@@ -153,49 +128,63 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-default-300 rounded-full;
+  background: oklch(0.85 0.01 285);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-default-400;
+  background: oklch(0.75 0.01 285);
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  @apply bg-default-500/40;
+  background: oklch(0.4 0.01 285);
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  @apply bg-default-400/50;
+  background: oklch(0.5 0.01 285);
 }
 
 /* ---- 选中文本 ---- */
 ::selection {
-  @apply bg-primary-200 text-primary-900;
+  background: oklch(0.9 0.04 10);
+  color: oklch(0.3 0.02 10);
 }
 
 .dark ::selection {
-  @apply bg-primary-800 text-primary-100;
+  background: oklch(0.35 0.04 10);
+  color: oklch(0.95 0.02 10);
 }
 
 /* ---- react-markdown 表格 ---- */
 .prose table {
-  @apply border-collapse w-full text-sm;
+  border-collapse: collapse;
+  width: 100%;
 }
 
 .prose th {
-  @apply border border-default-300 bg-default-100 px-3 py-2 text-left font-semibold;
+  border: 1px solid oklch(0.85 0.01 285);
+  background: oklch(0.96 0.005 285);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-weight: 600;
 }
 
 .prose td {
-  @apply border border-default-300 px-3 py-2;
+  border: 1px solid oklch(0.85 0.01 285);
+  padding: 0.5rem 0.75rem;
 }
 
 .prose blockquote {
-  @apply border-l-[3px] border-primary/40 bg-default-50/60 py-2 px-4 not-italic text-default-700;
+  border-left: 3px solid oklch(0.75 0.1 10);
+  background: oklch(0.98 0 0 / 0.6);
+  padding: 0.5rem 1rem;
+  font-style: normal;
 }
 
 .prose code {
-  @apply bg-default-200 px-1.5 py-0.5 rounded-sm text-sm;
+  background: oklch(0.93 0.005 285);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
 }
 
 .prose code::before,
@@ -204,21 +193,22 @@
 }
 
 .dark .prose th {
-  @apply border-default-700 bg-default-200/10;
+  border-color: oklch(0.4 0.01 285);
+  background: oklch(0.28 0.01 285);
 }
 
 .dark .prose td {
-  @apply border-default-700;
+  border-color: oklch(0.4 0.01 285);
 }
 
 .dark .prose blockquote {
-  @apply bg-default-200/10 text-default-400;
+  background: oklch(0.28 0.01 285);
+  color: oklch(0.65 0.01 285);
 }
 
 /* ---- 减弱动效 ---- */
 @media (prefers-reduced-motion: reduce) {
   .page-enter,
-  .card-enhanced,
   .bubble-user,
   .bubble-ai {
     animation: none !important;
