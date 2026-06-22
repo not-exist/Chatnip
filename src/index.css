@@ -1,6 +1,31 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../tailwind.config.js";
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", "WenQuanYi Micro Hei", system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", "JetBrains Mono", monospace;
+  --radius-2sm: 0.375rem;
+
+  --animate-fade-in-up: fade-in-up 0.35s ease-out both;
+  --animate-fade-in: fade-in 0.3s ease-out both;
+  --animate-skeleton-pulse: skeleton-pulse 1.8s ease-in-out infinite;
+
+  @keyframes fade-in-up {
+    0% { opacity: 0; transform: translateY(12px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes skeleton-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+}
 
 /* ---- 排版 ---- */
 .prose {
@@ -55,13 +80,13 @@
 
 /* ---- 卡片 ---- */
 .card-enhanced {
-  @apply border border-default-100/60 shadow-sm;
+  @apply border border-default-100/60 shadow-xs;
   backdrop-filter: blur(4px);
   transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
 .card-enhanced:hover {
-  @apply border-default-200 shadow-md;
+  @apply border-default-200 shadow-sm;
   transform: translateY(-1px);
 }
 
@@ -104,14 +129,9 @@
   @apply bg-default-200/40;
 }
 
-@keyframes skeleton-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
-}
-
 /* ---- 聊天气泡 ---- */
 .bubble-user {
-  @apply bg-gradient-to-br from-primary-400 to-primary-500 text-white shadow-sm;
+  @apply bg-gradient-to-br from-primary-400 to-primary-500 text-white shadow-xs;
 }
 
 .bubble-ai {
@@ -120,21 +140,6 @@
 
 .dark .bubble-ai {
   @apply bg-default-100/50 border-default-200/30;
-}
-
-/* ---- 渐变按钮 ---- */
-.btn-gradient {
-  @apply bg-gradient-to-r from-primary-400 to-primary-500 text-white shadow-sm;
-  transition: opacity 0.2s, box-shadow 0.2s, transform 0.2s;
-}
-
-.btn-gradient:hover {
-  @apply shadow-md;
-  transform: translateY(-1px);
-}
-
-.btn-gradient:active {
-  transform: translateY(0);
 }
 
 /* ---- 滚动条 ---- */
@@ -190,7 +195,7 @@
 }
 
 .prose code {
-  @apply bg-default-200 px-1.5 py-0.5 rounded text-sm;
+  @apply bg-default-200 px-1.5 py-0.5 rounded-sm text-sm;
 }
 
 .prose code::before,
@@ -214,7 +219,6 @@
 @media (prefers-reduced-motion: reduce) {
   .page-enter,
   .card-enhanced,
-  .btn-gradient,
   .bubble-user,
   .bubble-ai {
     animation: none !important;
