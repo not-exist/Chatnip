@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
-import { Card, CardBody, CardHeader } from '@heroui/card'
+import { Card, CardBody } from '@heroui/card'
 import { Button } from '@heroui/button'
 import { Divider } from '@heroui/divider'
 import { Spinner } from '@heroui/spinner'
@@ -8,6 +8,7 @@ import { Select, SelectItem } from '@heroui/select'
 import { FiArrowLeft, FiInfo, FiSliders, FiZap } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import AnalysisFeatureSelector from '@/components/AnalysisFeatureSelector'
+import SectionHeader from '@/components/SectionHeader'
 import DateRangePicker from '@/components/DateRangePicker'
 import { useAppSelector, useAppDispatch } from '@/store'
 import { setDefaultModel } from '@/store/settingsSlice'
@@ -259,12 +260,7 @@ export default function NewAnalysisPage() {
       </div>
 
       <Card className="card-enhanced">
-        <CardHeader className="flex gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <FiInfo className="text-primary" />
-          </div>
-          <h2 className="text-base font-semibold">会话信息</h2>
-        </CardHeader>
+        <SectionHeader icon={FiInfo} title="会话信息" variant="primary" />
         <Divider />
         <CardBody className="space-y-3 py-4">
           <div className="grid grid-cols-2 gap-3 text-sm">
@@ -285,12 +281,7 @@ export default function NewAnalysisPage() {
       </Card>
 
       <Card className="card-enhanced">
-        <CardHeader className="flex gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
-            <FiSliders className="text-secondary" />
-          </div>
-          <h2 className="text-base font-semibold">分析参数</h2>
-        </CardHeader>
+        <SectionHeader icon={FiSliders} title="分析参数" variant="secondary" />
         <Divider />
         <CardBody className="space-y-6 py-4">
           <div className="space-y-2.5">

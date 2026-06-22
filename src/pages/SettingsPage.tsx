@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Card, CardBody, CardHeader } from '@heroui/card'
+import { Card, CardBody } from '@heroui/card'
 import { Input } from '@heroui/input'
 import { Button } from '@heroui/button'
 import { Divider } from '@heroui/divider'
@@ -15,6 +15,7 @@ import {
   setDefaultModel,
 } from '@/store/settingsSlice'
 import AnalysisFeatureSelector from '@/components/AnalysisFeatureSelector'
+import SectionHeader from '@/components/SectionHeader'
 import { testConnection as testNapcat } from '@/api/napcat'
 import { testOpencodeConnection, listProviders, restartOpencodeServer } from '@/api/opencode'
 import type { ProviderInfo, ModelInfo } from '@/types'
@@ -110,12 +111,7 @@ export default function SettingsPage() {
       </div>
 
       <Card className="card-enhanced">
-        <CardHeader className="flex gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <FiServer className="text-primary" />
-          </div>
-          <h2 className="text-base font-semibold">NapCat 连接配置</h2>
-        </CardHeader>
+        <SectionHeader icon={FiServer} title="NapCat 连接配置" variant="primary" />
         <Divider />
         <CardBody className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
@@ -156,12 +152,7 @@ export default function SettingsPage() {
       </Card>
 
       <Card className="card-enhanced">
-        <CardHeader className="flex gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
-            <FiCpu className="text-secondary" />
-          </div>
-          <h2 className="text-base font-semibold">Opencode 连接配置</h2>
-        </CardHeader>
+        <SectionHeader icon={FiCpu} title="Opencode 连接配置" variant="secondary" />
         <Divider />
         <CardBody className="space-y-4 py-4">
           <p className="text-sm text-default-500">
@@ -209,12 +200,7 @@ export default function SettingsPage() {
       </Card>
 
       <Card className="card-enhanced">
-        <CardHeader className="flex gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-default-100 flex items-center justify-center">
-            <FiSettings className="text-default-600" />
-          </div>
-          <h2 className="text-base font-semibold">默认分析设置</h2>
-        </CardHeader>
+        <SectionHeader icon={FiSettings} title="默认分析设置" variant="default" />
         <Divider />
         <CardBody className="space-y-6 py-4">
           {providersLoading ? (
