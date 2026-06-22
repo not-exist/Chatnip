@@ -18,7 +18,7 @@ async function getClient() {
     baseUrl: PROXY_BASE,
     throwOnError: true,
   })
-  Promise.resolve(sdkPromise).catch(() => { sdkPromise = null })
+  sdkPromise.catch(() => { sdkPromise = null })
   return sdkPromise
 }
 
