@@ -8,7 +8,7 @@
     "start": "node scripts/start.js",
     "build": "tsc -b && vite build",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint . --ext .ts,.tsx",
+    "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -46,12 +46,16 @@
     "tailwindcss": "^4.3.1"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.1",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^4.3.4",
-    "@tailwindcss/postcss": "^4.3.1",
+    "eslint": "^10.5.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
     "postcss": "^8.5.1",
     "typescript": "^5.7.3",
+    "typescript-eslint": "^8.61.1",
     "vite": "^6.0.5"
   }
 }
