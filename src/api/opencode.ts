@@ -1,4 +1,5 @@
 import type { ProviderInfo, ModelInfo } from '@/types'
+import type { OpencodeClient } from '@opencode-ai/sdk/client'
 
 export interface FilePartInput {
   type: 'file'
@@ -9,17 +10,21 @@ export interface FilePartInput {
 
 const PROXY_BASE = '/api/opencode'
 
-let sdkPromise: ReturnType<typeof import('@opencode-ai/sdk/client').createOpencodeClient> | null = null
+let sdkClient: OpencodeClient | null = null
 
 async function getClient() {
-  if (sdkPromise) return sdkPromise
-  const { createOpencodeClient } = await import('@opencode-ai/sdk/client')
-  sdkPromise = createOpencodeClient({
-    baseUrl: PROXY_BASE,
-    throwOnError: true,
-  })
-  sdkPromise.catch(() => { sdkPromise = null })
-  return sdkPromise
+  if (sdkClient) return sdkClient
+  try {
+    const { createOpencodeClient } = await import('@opencode-ai/sdk/client')
+    sdkClient = createOpencodeClient({
+      baseUrl: PROXY_BASE,
+      throwOnError: true,
+    })
+    return sdkClient
+  } catch {
+    sdkClient = null
+    throw new Error('Failed to create Opencode client')
+  }
 }
 
 export async function createSession(title: string) {
