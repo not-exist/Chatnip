@@ -218,9 +218,17 @@ export default function SettingsPage() {
                   isDisabled={providers.length === 0}
                   className="rounded-xl"
                 >
-                  {providers.map((p) => (
-                    <ListBox.Item key={p.id}>{p.name}</ListBox.Item>
-                  ))}
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {providers.map((p) => (
+                        <ListBox.Item key={p.id} id={p.id} textValue={p.name}>{p.name}</ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
                 </Select>
               </div>
               {currentProvider && (
@@ -232,9 +240,17 @@ export default function SettingsPage() {
                     onChange={(key) => handleModelChange(String(key))}
                     className="rounded-xl"
                   >
-                    {modelOptions.map((m) => (
-                      <ListBox.Item key={m.key}>{m.name}</ListBox.Item>
-                    ))}
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {modelOptions.map((m) => (
+                          <ListBox.Item key={m.key} id={m.key} textValue={m.name}>{m.name}</ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
                   </Select>
                 </div>
               )}

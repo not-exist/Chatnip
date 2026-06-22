@@ -289,9 +289,17 @@ export default function NewAnalysisPage() {
                 className="max-w-[200px] rounded-xl text-sm"
                 isDisabled={providers.length === 0}
               >
-                {providers.map((p) => (
-                  <ListBox.Item key={p.id}>{p.name}</ListBox.Item>
-                ))}
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {providers.map((p) => (
+                      <ListBox.Item key={p.id} id={p.id} textValue={p.name}>{p.name}</ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
               </Select>
               {currentProvider && (
                 <Select
@@ -301,9 +309,17 @@ export default function NewAnalysisPage() {
                   onChange={(key) => handleModelChange(String(key))}
                   className="max-w-[300px] rounded-xl text-sm"
                 >
-                  {modelOptions.map((m) => (
-                    <ListBox.Item key={m.key}>{m.name}</ListBox.Item>
-                  ))}
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {modelOptions.map((m) => (
+                        <ListBox.Item key={m.key} id={m.key} textValue={m.name}>{m.name}</ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
                 </Select>
               )}
             </div>
