@@ -11,19 +11,19 @@ interface SessionCardProps {
   onDelete: () => void
 }
 
-const featureColorMap: Record<string, 'primary' | 'secondary' | 'warning' | 'success' | 'danger' | 'default'> = {
+const featureColorMap = {
   summary: 'primary',
   emotion: 'secondary',
   topic: 'success',
   active: 'warning',
   keyword: 'default',
   relationship: 'danger',
-}
+} as const satisfies Record<string, 'primary' | 'secondary' | 'warning' | 'success' | 'danger' | 'default'>
 
 export default function SessionCard({ session, onView, onDelete }: SessionCardProps) {
   const featureLabels = session.features.map((key) => {
     const opt = FEATURE_OPTIONS.find((f) => f.key === key)
-    return { key, label: opt?.label || key, color: featureColorMap[key] || 'default' as const }
+    return { key, label: opt?.label || key, color: featureColorMap[key as keyof typeof featureColorMap] || 'default' as const }
   })
 
   const date = new Date(session.createdAt)
