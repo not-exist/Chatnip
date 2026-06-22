@@ -18,7 +18,7 @@ import AnalysisFeatureSelector from '@/components/AnalysisFeatureSelector'
 import SectionHeader from '@/components/SectionHeader'
 import { testConnection as testNapcat } from '@/api/napcat'
 import { testOpencodeConnection, listProviders, restartOpencodeServer } from '@/api/opencode'
-import type { ProviderInfo, ModelInfo } from '@/types'
+import type { ProviderInfo } from '@/types'
 
 export default function SettingsPage() {
   const dispatch = useAppDispatch()
