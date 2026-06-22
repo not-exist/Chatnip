@@ -1,13 +1,11 @@
 import { Provider } from 'react-redux'
-import { HeroUIProvider } from '@heroui/system'
 import { Toaster } from 'react-hot-toast'
 import { store } from '@/store'
 import Router from '@/router'
 
 export default function App() {
   return (
-    <HeroUIProvider>
-      <Provider store={store}>
+    <Provider store={store}>
         <Toaster
           position="top-right"
           toastOptions={{
@@ -15,7 +13,6 @@ export default function App() {
           }}
         />
         <Router />
-      </Provider>
-    </HeroUIProvider>
+    </Provider>
   )
 }
