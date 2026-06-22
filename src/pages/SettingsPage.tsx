@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Card, CardBody } from '@heroui/card'
 import { Input } from '@heroui/input'
 import { Button } from '@heroui/button'
@@ -25,9 +25,6 @@ export default function SettingsPage() {
   const { napcat, opencode, defaultFeatures, defaultModel } = useAppSelector(
     (s) => s.settings,
   )
-  const napcatRef = useRef(napcat)
-  napcatRef.current = napcat
-
   const [providers, setProviders] = useState<ProviderInfo[]>([])
   const [providersLoading, setProvidersLoading] = useState(true)
   const [selectedProviderId, setSelectedProviderId] = useState(defaultModel?.providerID || '')
