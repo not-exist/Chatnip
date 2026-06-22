@@ -13,20 +13,80 @@ const defaultOpencodeConfig = {
   port: 4096,
 }
 
-function loadSettings(): SettingsState {
-  try {
-    const raw = localStorage.getItem('chatnip-settings')
-    if (raw) {
-      return JSON.parse(raw)
-    }
-  } catch { /* ignore */ }
-  return {
-    napcat: defaultNapcatConfig,
-    opencode: defaultOpencodeConfig,
+function isString(v: unknown): v is string {
+  return typeof v === 'string'
+}
+
+function isNumber(v: unknown): v is number {
+  return typeof v === 'number' && !Number.isNaN(v)
+}
+
+function isStringArray(v: unknown): v is string[] {
+  return Array.isArray(v) && v.every((item) => typeof item === 'string')
+}
+
+function isModelInfo(v: unknown): v is ModelInfo | undefined {
+  if (v === undefined || v === null) return true
+  if (typeof v !== 'object' || v === null) return false
+  const m = v as Record<string, unknown>
+  return isString(m.providerID) && m.providerID.length > 0
+    && isString(m.modelID) && m.modelID.length > 0
+    && isString(m.name) && m.name.length > 0
+}
+
+function sanitizeSettings(raw: unknown): SettingsState {
+  const defaults: SettingsState = {
+    napcat: { ...defaultNapcatConfig },
+    opencode: { ...defaultOpencodeConfig },
     defaultMessageCount: 200,
     defaultFeatures: ['summary', 'topics', 'sentiment'],
     defaultModel: undefined,
   }
+
+  if (typeof raw !== 'object' || raw === null) return defaults
+  const src = raw as Record<string, unknown>
+
+  // napcat validation
+  if (typeof src.napcat === 'object' && src.napcat !== null) {
+    const n = src.napcat as Record<string, unknown>
+    if (isString(n.host)) defaults.napcat.host = n.host
+    if (isNumber(n.port)) defaults.napcat.port = n.port
+    if (isString(n.token)) defaults.napcat.token = n.token
+  }
+
+  // opencode validation
+  if (typeof src.opencode === 'object' && src.opencode !== null) {
+    const o = src.opencode as Record<string, unknown>
+    if (isString(o.host)) defaults.opencode.host = o.host
+    if (isNumber(o.port)) defaults.opencode.port = o.port
+  }
+
+  // defaultMessageCount validation
+  if (isNumber(src.defaultMessageCount) && (src.defaultMessageCount as number) > 0) {
+    defaults.defaultMessageCount = src.defaultMessageCount as number
+  }
+
+  // defaultFeatures validation
+  if (isStringArray(src.defaultFeatures)) {
+    defaults.defaultFeatures = src.defaultFeatures as string[]
+  }
+
+  // defaultModel validation — must have non-empty providerID, modelID, and name
+  if (isModelInfo(src.defaultModel)) {
+    defaults.defaultModel = src.defaultModel as ModelInfo | undefined
+  }
+
+  return defaults
+}
+
+function loadSettings(): SettingsState {
+  try {
+    const raw = localStorage.getItem('chatnip-settings')
+    if (raw) {
+      return sanitizeSettings(JSON.parse(raw))
+    }
+  } catch { /* ignore corrupt JSON */ }
+  return sanitizeSettings(null)
 }
 
 const initialState: SettingsState = loadSettings()

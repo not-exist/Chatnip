@@ -9,6 +9,12 @@ export interface OpencodeConfig {
   port: number
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  timestamp?: number
+}
+
 export interface ModelInfo {
   providerID: string
   modelID: string
@@ -76,9 +82,4 @@ export interface FeatureOption {
   key: string
   label: string
   description: string
-}
-
-export interface AnalysisResult {
-  sessionId: string
-  text: string
 }

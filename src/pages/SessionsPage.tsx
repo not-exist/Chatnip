@@ -1,44 +1,28 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Input } from '@heroui/input'
-import { Button } from '@heroui/button'
-import { FiRefreshCw, FiSearch, FiFileText } from 'react-icons/fi'
+import { Input, Button } from '@heroui/react'
+import { FiRefreshCw, FiFileText } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import SessionCard from '@/components/SessionCard'
+import EmptyState from '@/components/EmptyState'
 import { useOpencode } from '@/hooks/useOpencode'
 import type { SessionInfo } from '@/types'
 
 function SkeletonSession() {
   return (
-    <div className="p-5 rounded-xl border border-default-100/60 space-y-3">
+    <div className="p-5 rounded-xl border border-gray-200/60 dark:border-white/10 space-y-3">
       <div className="flex justify-between">
-        <div className="h-5 w-48 skeleton rounded" />
+        <div className="h-5 w-48 skeleton rounded-sm" />
         <div className="flex gap-2">
           <div className="h-8 w-16 skeleton rounded-lg" />
           <div className="h-8 w-8 skeleton rounded-lg" />
         </div>
       </div>
-      <div className="h-3 w-64 skeleton rounded" />
+      <div className="h-3 w-64 skeleton rounded-sm" />
       <div className="flex gap-2">
         <div className="h-6 w-16 skeleton rounded-full" />
         <div className="h-6 w-20 skeleton rounded-full" />
       </div>
-    </div>
-  )
-}
-
-function EmptyState({ hasAny }: { hasAny: boolean }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-default-400">
-      <div className="w-16 h-16 rounded-2xl bg-default-100 flex items-center justify-center mb-5">
-        <FiFileText className="text-3xl opacity-50" />
-      </div>
-      <p className="text-base font-medium text-default-600 mb-1.5">
-        {hasAny ? '无匹配结果' : '暂无分析记录'}
-      </p>
-      <p className="text-sm">
-        {hasAny ? '尝试修改搜索条件' : '去选择一个会话开始分析吧'}
-      </p>
     </div>
   )
 }
@@ -88,15 +72,15 @@ export default function SessionsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">分析历史</h1>
-          <p className="text-sm text-default-500 mt-1">查看和管理历史分析结果</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">查看和管理历史分析结果</p>
         </div>
         <Button
-          variant="flat"
+          variant="tertiary"
           size="sm"
-          startContent={<FiRefreshCw />}
           onPress={loadSessions}
           className="rounded-xl"
         >
+          <FiRefreshCw className="mr-1" />
           刷新
         </Button>
       </div>
@@ -104,11 +88,8 @@ export default function SessionsPage() {
       <Input
         placeholder="搜索分析记录..."
         value={search}
-        onValueChange={setSearch}
-        isClearable
-        startContent={<FiSearch className="text-default-400" />}
-        classNames={{ inputWrapper: 'rounded-xl shadow-sm' }}
-        className="max-w-md"
+        onChange={(e) => setSearch(e.target.value)}
+        className="max-w-md rounded-xl"
       />
 
       {loading && (
@@ -118,7 +99,11 @@ export default function SessionsPage() {
       )}
 
       {!loading && filtered.length === 0 && (
-        <EmptyState hasAny={sessions.length > 0} />
+        <EmptyState
+          icon={FiFileText}
+          title={sessions.length > 0 ? '无匹配结果' : '暂无分析记录'}
+          description={sessions.length > 0 ? '尝试修改搜索条件' : '去选择一个会话开始分析吧'}
+        />
       )}
 
       {!loading && (

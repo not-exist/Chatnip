@@ -1,10 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { Card, CardBody, CardHeader } from '@heroui/card'
-import { Input } from '@heroui/input'
-import { Button } from '@heroui/button'
-import { Divider } from '@heroui/divider'
-import { Select, SelectItem } from '@heroui/select'
-import { Spinner } from '@heroui/spinner'
+import { useEffect, useState } from 'react'
+import { Card, Input, Button, Separator, Select, ListBox, Spinner } from '@heroui/react'
 import { FiServer, FiCpu, FiSettings, FiCheckCircle } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { useAppSelector, useAppDispatch } from '@/store'
@@ -15,18 +10,16 @@ import {
   setDefaultModel,
 } from '@/store/settingsSlice'
 import AnalysisFeatureSelector from '@/components/AnalysisFeatureSelector'
+import SectionHeader from '@/components/SectionHeader'
 import { testConnection as testNapcat } from '@/api/napcat'
 import { testOpencodeConnection, listProviders, restartOpencodeServer } from '@/api/opencode'
-import type { ProviderInfo, ModelInfo } from '@/types'
+import type { ProviderInfo } from '@/types'
 
 export default function SettingsPage() {
   const dispatch = useAppDispatch()
   const { napcat, opencode, defaultFeatures, defaultModel } = useAppSelector(
     (s) => s.settings,
   )
-  const napcatRef = useRef(napcat)
-  napcatRef.current = napcat
-
   const [providers, setProviders] = useState<ProviderInfo[]>([])
   const [providersLoading, setProvidersLoading] = useState(true)
   const [selectedProviderId, setSelectedProviderId] = useState(defaultModel?.providerID || '')
@@ -106,96 +99,98 @@ export default function SettingsPage() {
     <div className="space-y-6 max-w-2xl">
       <div>
         <h1 className="text-2xl font-bold">设置</h1>
-        <p className="text-sm text-default-500 mt-1">配置 NapCat 与 Opencode 连接</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">配置 NapCat 与 Opencode 连接</p>
       </div>
 
-      <Card className="card-enhanced">
-        <CardHeader className="flex gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <FiServer className="text-primary" />
-          </div>
-          <h2 className="text-base font-semibold">NapCat 连接配置</h2>
-        </CardHeader>
-        <Divider />
-        <CardBody className="space-y-4 py-4">
+      <Card className="border border-gray-200/60 dark:border-white/10 shadow-sm transition-all duration-200 hover:border-gray-300 dark:hover:border-white/20 hover:shadow-md hover:-translate-y-px">
+        <SectionHeader icon={FiServer} title="NapCat 连接配置" variant="primary" />
+        <Separator />
+        <Card.Content className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label htmlFor="napcat-host" className="text-sm font-medium text-gray-700 dark:text-gray-300">主机地址</label>
+              <Input
+                id="napcat-host"
+                value={napcat.host}
+                onChange={(e) => dispatch(setNapcatConfig({ host: e.target.value }))}
+                placeholder="127.0.0.1"
+                className="rounded-xl"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="napcat-port" className="text-sm font-medium text-gray-700 dark:text-gray-300">端口</label>
+              <Input
+                id="napcat-port"
+                type="number"
+                value={String(napcat.port)}
+                onChange={(e) => dispatch(setNapcatConfig({ port: Number(e.target.value) || 3000 }))}
+                placeholder="3000"
+                className="rounded-xl"
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="napcat-token" className="text-sm font-medium text-gray-700 dark:text-gray-300">Token (可选)</label>
             <Input
-              label="主机地址"
-              value={napcat.host}
-              onValueChange={(v) => dispatch(setNapcatConfig({ host: v }))}
-              placeholder="127.0.0.1"
-              classNames={{ inputWrapper: 'rounded-xl' }}
-            />
-            <Input
-              label="端口"
-              type="number"
-              value={String(napcat.port)}
-              onValueChange={(v) => dispatch(setNapcatConfig({ port: Number(v) || 3000 }))}
-              placeholder="3000"
-              classNames={{ inputWrapper: 'rounded-xl' }}
+              id="napcat-token"
+              value={napcat.token}
+              onChange={(e) => dispatch(setNapcatConfig({ token: e.target.value }))}
+              placeholder="Bearer token"
+              type="password"
+              className="rounded-xl"
             />
           </div>
-          <Input
-            label="Token (可选)"
-            value={napcat.token}
-            onValueChange={(v) => dispatch(setNapcatConfig({ token: v }))}
-            placeholder="Bearer token"
-            type="password"
-            classNames={{ inputWrapper: 'rounded-xl' }}
-          />
           <Button
-            color="primary"
-            variant="flat"
+            variant="tertiary"
             onPress={handleTestNapcat}
             className="rounded-xl"
-            startContent={<FiCheckCircle />}
           >
+            <FiCheckCircle className="mr-2" />
             测试连接
           </Button>
-        </CardBody>
+        </Card.Content>
       </Card>
 
-      <Card className="card-enhanced">
-        <CardHeader className="flex gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
-            <FiCpu className="text-secondary" />
-          </div>
-          <h2 className="text-base font-semibold">Opencode 连接配置</h2>
-        </CardHeader>
-        <Divider />
-        <CardBody className="space-y-4 py-4">
-          <p className="text-sm text-default-500">
+      <Card className="border border-gray-200/60 dark:border-white/10 shadow-sm transition-all duration-200 hover:border-gray-300 dark:hover:border-white/20 hover:shadow-md hover:-translate-y-px">
+        <SectionHeader icon={FiCpu} title="Opencode 连接配置" variant="secondary" />
+        <Separator />
+        <Card.Content className="space-y-4 py-4">
+          <p className="text-sm text-gray-500">
             opencode serve 随 Vite 自动启动，通过代理连接（端口 4096）
           </p>
           <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="主机地址"
-              value={opencode.host}
-              onValueChange={(v) => dispatch(setOpencodeConfig({ host: v }))}
-              placeholder="127.0.0.1"
-              classNames={{ inputWrapper: 'rounded-xl' }}
-            />
-            <Input
-              label="端口"
-              type="number"
-              value={String(opencode.port)}
-              onValueChange={(v) => dispatch(setOpencodeConfig({ port: Number(v) || 4096 }))}
-              placeholder="4096"
-              classNames={{ inputWrapper: 'rounded-xl' }}
-            />
+            <div className="space-y-1.5">
+              <label htmlFor="opencode-host" className="text-sm font-medium text-gray-700 dark:text-gray-300">主机地址</label>
+              <Input
+                id="opencode-host"
+                value={opencode.host}
+                onChange={(e) => dispatch(setOpencodeConfig({ host: e.target.value }))}
+                placeholder="127.0.0.1"
+                className="rounded-xl"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="opencode-port" className="text-sm font-medium text-gray-700 dark:text-gray-300">端口</label>
+              <Input
+                id="opencode-port"
+                type="number"
+                value={String(opencode.port)}
+                onChange={(e) => dispatch(setOpencodeConfig({ port: Number(e.target.value) || 4096 }))}
+                placeholder="4096"
+                className="rounded-xl"
+              />
+            </div>
           </div>
           <Button
-            color="primary"
-            variant="flat"
+            variant="tertiary"
             onPress={handleTestOpencode}
             className="rounded-xl"
-            startContent={<FiCheckCircle />}
           >
+            <FiCheckCircle className="mr-2" />
             测试连接
           </Button>
           <Button
-            variant="flat"
-            color="warning"
+            variant="secondary"
             onPress={async () => {
               const result = await restartOpencodeServer()
               if (result.ok) toast.success('Opencode Server 已重启')
@@ -205,70 +200,81 @@ export default function SettingsPage() {
           >
             重启 Server
           </Button>
-        </CardBody>
+        </Card.Content>
       </Card>
 
-      <Card className="card-enhanced">
-        <CardHeader className="flex gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-default-100 flex items-center justify-center">
-            <FiSettings className="text-default-600" />
-          </div>
-          <h2 className="text-base font-semibold">默认分析设置</h2>
-        </CardHeader>
-        <Divider />
-        <CardBody className="space-y-6 py-4">
+      <Card className="border border-gray-200/60 dark:border-white/10 shadow-sm transition-all duration-200 hover:border-gray-300 dark:hover:border-white/20 hover:shadow-md hover:-translate-y-px">
+        <SectionHeader icon={FiSettings} title="默认分析设置" variant="default" />
+        <Separator />
+        <Card.Content className="space-y-6 py-4">
           {providersLoading ? (
-            <div className="flex items-center gap-2 text-default-500 py-2">
+            <div className="flex items-center gap-2 text-gray-500 py-2">
               <Spinner size="sm" />
               <span className="text-sm">正在加载模型列表...</span>
             </div>
           ) : (
             <div className="space-y-4 max-w-md">
-              <Select
-                label="AI 模型"
-                placeholder={providers.length === 0 ? '未检测到可用模型（使用 opencode 默认）' : '选择 provider'}
-                selectedKeys={selectedProviderId ? [selectedProviderId] : []}
-                onSelectionChange={(keys) => {
-                  const id = Array.from(keys as Set<string>)[0] || ''
-                  handleProviderChange(id)
-                }}
-                isDisabled={providers.length === 0}
-                classNames={{ trigger: 'rounded-xl' }}
-              >
-                {providers.map((p) => (
-                  <SelectItem key={p.id}>{p.name}</SelectItem>
-                ))}
-              </Select>
-              {currentProvider && (
+              <div className="space-y-1.5">
+                <label htmlFor="default-provider" className="text-sm font-medium text-gray-700 dark:text-gray-300">AI 模型</label>
                 <Select
-                  label="模型"
-                  placeholder="选择具体模型"
-                  selectedKeys={selectedModelId ? [selectedModelId] : []}
-                  onSelectionChange={(keys) => {
-                    const id = Array.from(keys as Set<string>)[0] || ''
-                    handleModelChange(id)
-                  }}
-                  classNames={{ trigger: 'rounded-xl' }}
+                  id="default-provider"
+                  placeholder={providers.length === 0 ? '未检测到可用模型（使用 opencode 默认）' : '选择 provider'}
+                  value={selectedProviderId}
+                  onChange={(key) => handleProviderChange(String(key))}
+                  isDisabled={providers.length === 0}
+                  className="rounded-xl"
                 >
-                  {modelOptions.map((m) => (
-                    <SelectItem key={m.key}>{m.name}</SelectItem>
-                  ))}
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {providers.map((p) => (
+                        <ListBox.Item key={p.id} id={p.id} textValue={p.name}>{p.name}</ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
                 </Select>
+              </div>
+              {currentProvider && (
+                <div className="space-y-1.5">
+                    <label htmlFor="default-model" className="text-sm font-medium text-gray-700 dark:text-gray-300">模型</label>
+                    <Select
+                      id="default-model"
+                      placeholder="选择具体模型"
+                      value={selectedModelId}
+                      onChange={(key) => handleModelChange(String(key))}
+                      className="rounded-xl"
+                    >
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {modelOptions.map((m) => (
+                          <ListBox.Item key={m.key} id={m.key} textValue={m.name}>{m.name}</ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                </div>
               )}
               {defaultModel && (
-                <div className="flex items-center gap-2 text-sm text-default-500">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                   当前默认: {defaultModel.name}
                 </div>
               )}
             </div>
           )}
-          <Divider />
+          <Separator />
           <AnalysisFeatureSelector
             selected={defaultFeatures}
             onChange={(f) => dispatch(setDefaultFeatures(f))}
           />
-        </CardBody>
+        </Card.Content>
       </Card>
     </div>
   )

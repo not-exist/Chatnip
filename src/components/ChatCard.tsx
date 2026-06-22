@@ -1,5 +1,3 @@
-import { Card, CardBody } from '@heroui/card'
-import { Chip } from '@heroui/chip'
 import { FiUsers, FiUser, FiChevronRight } from 'react-icons/fi'
 import type { ChatType } from '@/types'
 
@@ -15,30 +13,36 @@ export default function ChatCard({ id, name, chatType, memberCount, onClick }: C
   const Icon = chatType === 'group' ? FiUsers : FiUser
 
   return (
-    <Card
-      isPressable
-      onPress={onClick}
-      className="w-full hover:bg-default-100 transition-all duration-200 hover:shadow-sm hover:-translate-y-px card-enhanced group"
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label={`选择 ${name || '聊天'}`}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+          e.preventDefault() // prevent default Space key scroll
+          onClick()
+        }
+      }}
+      className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200/60 bg-white dark:bg-white/5 dark:border-white/10 cursor-pointer transition-all duration-200 hover:bg-gray-50 hover:shadow-sm hover:-translate-y-px dark:hover:bg-white/10 group focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none"
     >
-      <CardBody className="flex flex-row items-center gap-4 py-3.5">
-        <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-primary-300 to-primary-500 flex items-center justify-center shadow-sm">
-          <Icon className="text-white text-lg" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-[15px] truncate">{name || `ID: ${id}`}</p>
-          <p className="text-xs text-default-400 mt-0.5">
-            {chatType === 'group' ? '群聊' : '好友'} · ID: {id}
-          </p>
-        </div>
-        <div className="flex-shrink-0 flex items-center gap-2">
-          {chatType === 'group' && memberCount !== undefined && (
-            <Chip size="sm" variant="flat" color="primary" className="font-medium">
-              {memberCount} 人
-            </Chip>
-          )}
-          <FiChevronRight className="text-default-300 group-hover:text-default-500 transition-colors" />
-        </div>
-      </CardBody>
-    </Card>
+      <div className="shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-rose-400 to-rose-500 flex items-center justify-center shadow-sm">
+        <Icon className="text-white text-lg" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-[15px] truncate">{name || `ID: ${id}`}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+          {chatType === 'group' ? '群聊' : '好友'} · ID: {id}
+        </p>
+      </div>
+      <div className="shrink-0 flex items-center gap-2">
+        {chatType === 'group' && memberCount !== undefined && (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400">
+            {memberCount} 人
+          </span>
+        )}
+        <FiChevronRight className="text-gray-300 group-hover:text-gray-500 transition-colors dark:text-gray-600 dark:group-hover:text-gray-400" />
+      </div>
+    </div>
   )
 }

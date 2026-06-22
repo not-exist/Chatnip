@@ -17,6 +17,11 @@ tsconfig.tsbuildinfo
 app-running.png
 napcat-target.json
 
+# Logs
+vite-error.log
+vite-output.log
+*.log
+
 # HelloAGENTS – plans, sessions, state, knowledge base
 .helloagents/
 

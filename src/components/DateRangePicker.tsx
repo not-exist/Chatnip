@@ -24,36 +24,35 @@ export default function DateRangePicker({ value, onChange }: DateRangePickerProp
     <div className="relative">
       <button
         type="button"
-        className="w-full flex items-center gap-2.5 px-4 py-3 rounded-xl border border-default-200
-          bg-default-50 hover:bg-default-100 hover:border-default-300 transition-all duration-150 text-left
-          dark:bg-default-100 dark:hover:bg-default-200 dark:border-default-400"
+        className={`w-full flex items-center gap-2.5 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700
+          bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-150 text-left${value?.from ? ' pr-10' : ''}`}
         onClick={() => setOpen(!open)}
       >
-        <svg className="w-5 h-5 text-default-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
-        <span className={value?.from ? 'text-foreground font-medium' : 'text-default-400'}>
+        <span className={value?.from ? 'text-gray-900 dark:text-gray-100 font-medium' : 'text-gray-400 dark:text-gray-500'}>
           {label}
         </span>
-        {value?.from && (
-          <button
-            type="button"
-            className="ml-auto p-1 rounded-lg hover:bg-default-200 transition-colors"
-            onClick={(e) => {
-              e.stopPropagation()
-              onChange(undefined)
-            }}
-          >
-            <svg className="w-4 h-4 text-default-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        )}
       </button>
+      {value?.from && (
+        <button
+          type="button"
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors z-10"
+          onClick={(e) => {
+            e.stopPropagation()
+            onChange(undefined)
+          }}
+          aria-label="清除日期"
+        >
+          <svg className="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      )}
       {open && (
-        <div className="absolute z-50 mt-2 p-3 rounded-xl border border-default-200 bg-background shadow-xl
-          dark:bg-default-100 dark:border-default-500 animate-fade-in">
+        <div className="absolute z-50 mt-2 p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-xl animate-fade-in">
           <DayPicker
             mode="range"
             selected={value}

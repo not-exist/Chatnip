@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import * as opencodeApi from '@/api/opencode'
 import type { FilePartInput } from '@/api/opencode'
-import { registerSession, unregisterSession, getRegisteredSessions, updateSessionTitle } from '@/store/sessionRegistry'
+import { registerSession, unregisterSession, getRegisteredSessions } from '@/store/sessionRegistry'
 import type { ChatType, SessionInfo, ModelInfo } from '@/types'
 
 interface CreateSessionParams {

@@ -1,21 +1,18 @@
 import { Provider } from 'react-redux'
-import { HeroUIProvider } from '@heroui/system'
 import { Toaster } from 'react-hot-toast'
 import { store } from '@/store'
 import Router from '@/router'
 
 export default function App() {
   return (
-    <HeroUIProvider>
-      <Provider store={store}>
+    <Provider store={store}>
         <Toaster
           position="top-right"
           toastOptions={{
-            className: '!bg-background !text-foreground !border !border-default-200',
+            className: '!bg-white dark:!bg-gray-950 !text-gray-900 dark:!text-gray-100 !border !border-gray-200 dark:!border-gray-700',
           }}
         />
         <Router />
-      </Provider>
-    </HeroUIProvider>
+    </Provider>
   )
 }
