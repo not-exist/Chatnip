@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@heroui/button'
-import { Divider } from '@heroui/divider'
+import { Separator } from '@heroui/react'
 import { Spinner } from '@heroui/spinner'
-import { Chip } from '@heroui/chip'
+import { Chip } from '@heroui/react'
 import { FiArrowLeft, FiChevronDown, FiChevronUp } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import DimensionCard from '@/components/DimensionCard'
@@ -163,7 +163,7 @@ export default function SessionDetailPage() {
         </div>
       </div>
 
-      <Divider />
+      <Separator />
 
       {/* Initial Analysis: Dimension Cards View */}
       {isInitialAnalysis && dimensions.length > 0 && (
@@ -179,7 +179,7 @@ export default function SessionDetailPage() {
               >
                 <Chip
                   size="sm"
-                  variant="flat"
+                  variant="tertiary"
                   className="cursor-pointer font-medium"
                 >
                   {dim.label}
@@ -217,11 +217,11 @@ export default function SessionDetailPage() {
       <div className="sticky bottom-0 bg-background/85 backdrop-blur-md py-4 -mx-4 px-4 border-t border-default-100 space-y-4">
         {isInitialAnalysis && (
           <div className="flex items-center gap-3">
-            <Divider className="flex-1" />
+            <Separator className="flex-1" />
             <span className="text-xs text-default-400 font-medium shrink-0">
               追问
             </span>
-            <Divider className="flex-1" />
+            <Separator className="flex-1" />
           </div>
         )}
 

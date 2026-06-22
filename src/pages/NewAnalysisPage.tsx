@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { Card, CardBody } from '@heroui/card'
 import { Button } from '@heroui/button'
-import { Divider } from '@heroui/divider'
+import { Separator } from '@heroui/react'
 import { Spinner } from '@heroui/spinner'
 import { Select, SelectItem } from '@heroui/select'
 import { FiArrowLeft, FiInfo, FiSliders, FiZap } from 'react-icons/fi'
@@ -260,7 +260,7 @@ export default function NewAnalysisPage() {
 
       <Card className="card-enhanced">
         <SectionHeader icon={FiInfo} title="会话信息" variant="primary" />
-        <Divider />
+        <Separator />
         <CardBody className="space-y-3 py-4">
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
@@ -281,7 +281,7 @@ export default function NewAnalysisPage() {
 
       <Card className="card-enhanced">
         <SectionHeader icon={FiSliders} title="分析参数" variant="secondary" />
-        <Divider />
+        <Separator />
         <CardBody className="space-y-6 py-4">
           <div className="space-y-2.5">
             <label className="text-sm font-medium text-default-700">AI 模型</label>

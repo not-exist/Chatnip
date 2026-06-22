@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardBody } from '@heroui/card'
 import { Input } from '@heroui/input'
 import { Button } from '@heroui/button'
-import { Divider } from '@heroui/divider'
+import { Separator } from '@heroui/react'
 import { Select, SelectItem } from '@heroui/select'
 import { Spinner } from '@heroui/spinner'
 import { FiServer, FiCpu, FiSettings, FiCheckCircle } from 'react-icons/fi'
@@ -109,7 +109,7 @@ export default function SettingsPage() {
 
       <Card className="card-enhanced">
         <SectionHeader icon={FiServer} title="NapCat 连接配置" variant="primary" />
-        <Divider />
+        <Separator />
         <CardBody className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <Input
@@ -150,7 +150,7 @@ export default function SettingsPage() {
 
       <Card className="card-enhanced">
         <SectionHeader icon={FiCpu} title="Opencode 连接配置" variant="secondary" />
-        <Divider />
+        <Separator />
         <CardBody className="space-y-4 py-4">
           <p className="text-sm text-default-500">
             opencode serve 随 Vite 自动启动，通过代理连接（端口 4096）
@@ -198,7 +198,7 @@ export default function SettingsPage() {
 
       <Card className="card-enhanced">
         <SectionHeader icon={FiSettings} title="默认分析设置" variant="default" />
-        <Divider />
+        <Separator />
         <CardBody className="space-y-6 py-4">
           {providersLoading ? (
             <div className="flex items-center gap-2 text-default-500 py-2">
@@ -246,7 +246,7 @@ export default function SettingsPage() {
               )}
             </div>
           )}
-          <Divider />
+<Separator />
           <AnalysisFeatureSelector
             selected={defaultFeatures}
             onChange={(f) => dispatch(setDefaultFeatures(f))}
