@@ -4,6 +4,8 @@ import remarkGfm from 'remark-gfm'
 import { FiUser, FiCpu } from 'react-icons/fi'
 import type { ChatMessage } from '@/types'
 
+const MAX_USER_MESSAGE_LENGTH = 1200
+
 interface ConversationViewProps {
   messages: ChatMessage[]
   hideUserMessages?: boolean
@@ -32,7 +34,7 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
             : 'bubble-ai rounded-2xl rounded-tl-md'
         }`}>
           {isUser ? (
-            <p className="whitespace-pre-wrap">{msg.content.length > 1200 ? msg.content.slice(0, 1200) + '\n...(已截断)' : msg.content}</p>
+            <p className="whitespace-pre-wrap">{msg.content.length > MAX_USER_MESSAGE_LENGTH ? msg.content.slice(0, MAX_USER_MESSAGE_LENGTH) + '\n...(已截断)' : msg.content}</p>
           ) : (
             <div className="prose prose-sm dark:prose-invert max-w-none
               prose-p:my-1
