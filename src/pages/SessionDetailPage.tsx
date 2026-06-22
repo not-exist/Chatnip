@@ -41,6 +41,7 @@ export default function SessionDetailPage() {
   const [showFollowUpHistory, setShowFollowUpHistory] = useState(false)
 
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const sendingRef = useRef(false)
 
   const loadFromOpencode = useCallback(async () => {
     try {
@@ -73,12 +74,20 @@ export default function SessionDetailPage() {
     }
   }, [isInitialAnalysis, loadFromOpencode])
 
+  useEffect(() => {
+    return () => {
+      cardRefs.current.clear()
+    }
+  }, [dimensions])
+
   const scrollToDimension = (key: string) => {
     const el = cardRefs.current.get(key)
     el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   const handleSend = async (text: string) => {
+    if (sendingRef.current) return
+
     const userMsg: ChatMessage = { role: 'user', content: text, timestamp: Date.now() }
 
     if (isInitialAnalysis) {
@@ -88,6 +97,7 @@ export default function SessionDetailPage() {
       setMessages((prev) => [...prev, userMsg])
     }
 
+    sendingRef.current = true
     setSending(true)
 
     try {
@@ -117,6 +127,7 @@ export default function SessionDetailPage() {
         setMessages((prev) => prev.slice(0, -1))
       }
     } finally {
+      sendingRef.current = false
       setSending(false)
     }
   }
