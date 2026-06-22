@@ -20,10 +20,8 @@ Enter: `master`
   - [x] Require approvals: `1`
 - [x] **Require status checks to pass before merging**
   - [x] Require branches to be up to date before merging
-  - Search for and select these checks:
-    - `lint`
-    - `typecheck-and-build`
-    - `test`
+  - Search for and select this check:
+    - `CI`
 - [x] **Require conversation resolution before merging**
 
 ### 4. Optional (Recommended)
@@ -41,9 +39,7 @@ Click "Create" or "Save changes" at the bottom.
 ## CI Checks Reference
 | Check Name | Description | Source |
 |------------|-------------|--------|
-| `lint` | ESLint code quality check | `.github/workflows/ci.yml` |
-| `typecheck-and-build` | TypeScript type checking + Vite production build | `.github/workflows/ci.yml` |
-| `test` | Vitest test suite | `.github/workflows/ci.yml` |
+| `CI` | ESLint + TypeScript typecheck + Vite build + Vitest test | `.github/workflows/ci.yml` |
 
 ## Troubleshooting
 - **"No status checks found"**: Run CI at least once on the master branch first
