@@ -16,9 +16,15 @@ export default function ChatCard({ id, name, chatType, memberCount, onClick }: C
     <div
       role="button"
       tabIndex={0}
+      aria-label={`选择 ${name || '聊天'}`}
       onClick={onClick}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
-      className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200/60 bg-white dark:bg-white/5 dark:border-white/10 cursor-pointer transition-all duration-200 hover:bg-gray-50 hover:shadow-sm hover:-translate-y-px dark:hover:bg-white/10 group"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+          e.preventDefault() // prevent default Space key scroll
+          onClick()
+        }
+      }}
+      className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200/60 bg-white dark:bg-white/5 dark:border-white/10 cursor-pointer transition-all duration-200 hover:bg-gray-50 hover:shadow-sm hover:-translate-y-px dark:hover:bg-white/10 group focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none"
     >
       <div className="shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-rose-400 to-rose-500 flex items-center justify-center shadow-sm">
         <Icon className="text-white text-lg" />
