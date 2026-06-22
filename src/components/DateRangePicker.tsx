@@ -37,18 +37,26 @@ export default function DateRangePicker({ value, onChange }: DateRangePickerProp
           {label}
         </span>
         {value?.from && (
-          <button
-            type="button"
-            className="ml-auto p-1 rounded-lg hover:bg-default-200 transition-colors"
+          <span
+            role="button"
+            tabIndex={0}
+            className="ml-auto p-1 rounded-lg hover:bg-default-200 transition-colors cursor-pointer"
             onClick={(e) => {
               e.stopPropagation()
               onChange(undefined)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                e.stopPropagation()
+                onChange(undefined)
+              }
             }}
           >
             <svg className="w-4 h-4 text-default-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
+          </span>
         )}
       </button>
       {open && (
