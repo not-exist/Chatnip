@@ -18,15 +18,21 @@ export default function SessionDetailPage() {
   const navigate = useNavigate()
   const sessionId = id!
 
-  const initialContent =
+  const [analysisContent, setAnalysisContent] = useState(
     (location.state as { initialContent?: string })?.initialContent || ''
-  const chatName =
-    (location.state as { chatName?: string })?.chatName || ''
-
-  const isInitialAnalysis = !!initialContent
+  )
+  const [chatName, setChatName] = useState(
+    (location.state as { chatName?: string })?.chatName ||
+    getRegisteredSession(sessionId)?.chatName ||
+    ''
+  )
+  const [serverDetectedAnalysis, setServerDetectedAnalysis] = useState(false)
+  const registered = getRegisteredSession(sessionId)
+  const isAnalysisFromRegistry = !!(registered?.features?.length)
+  const isInitialAnalysis = isAnalysisFromRegistry || !!analysisContent || serverDetectedAnalysis
   const dimensions = useMemo(
-    () => (initialContent ? parseDimensions(initialContent) : []),
-    [initialContent],
+    () => (analysisContent ? parseDimensions(analysisContent) : []),
+    [analysisContent],
   )
 
   const defaultModel = useAppSelector((s) => s.settings.defaultModel)
@@ -35,7 +41,7 @@ export default function SessionDetailPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [followUpMessages, setFollowUpMessages] = useState<ChatMessage[]>([])
   const [sending, setSending] = useState(false)
-  const [loading, setLoading] = useState(isInitialAnalysis ? false : true)
+  const [loading, setLoading] = useState(!analysisContent)
   const [showFollowUpHistory, setShowFollowUpHistory] = useState(false)
 
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
@@ -44,33 +50,60 @@ export default function SessionDetailPage() {
   const loadFromOpencode = useCallback(async () => {
     try {
       const result = await getMessages(sessionId)
-      if (result && result.length > 0) {
-        const msgs: ChatMessage[] = result.map((m) => {
-          const text =
-            m.parts
-              ?.filter((p) => p.type === 'text')
-              .map((p) => (p as { text: string }).text)
-              .join('\n') || ''
-          return {
-            role: (m.info.role as ChatMessage['role']) || 'assistant',
-            content: text,
-            timestamp: m.info.time?.created,
+      if (!result || result.length === 0) {
+        setLoading(false)
+        return
+      }
+
+      const msgs: ChatMessage[] = result.map((m) => {
+        const text =
+          m.parts
+            ?.filter((p) => p.type === 'text')
+            .map((p) => (p as { text: string }).text)
+            .join('\n') || ''
+        return {
+          role: (m.info.role as ChatMessage['role']) || 'assistant',
+          content: text,
+          timestamp: m.info.time?.created,
+        }
+      })
+
+      if (isInitialAnalysis || isAnalysisFromRegistry) {
+        const firstAssistantIdx = msgs.findIndex((m) => m.role === 'assistant')
+        if (firstAssistantIdx >= 0) {
+          if (!analysisContent) {
+            setAnalysisContent(msgs[firstAssistantIdx].content)
           }
-        })
-        setMessages(msgs)
+          setFollowUpMessages(msgs.slice(firstAssistantIdx + 1))
+          if (!chatName && registered?.chatName) {
+            setChatName(registered.chatName)
+          }
+        } else {
+          console.warn('[SessionDetail] 分析会话中未找到 assistant 消息，按非分析会话处理')
+          setMessages(msgs)
+        }
+      } else {
+        // 非分析会话：检查是否需要 `##` 兜底检测
+        const firstAssistantIdx = msgs.findIndex((m) => m.role === 'assistant')
+        if (firstAssistantIdx >= 0 && msgs[firstAssistantIdx].content.includes('## ')) {
+          // 检测到分析内容特征，切换为分析模式
+          setServerDetectedAnalysis(true)
+          setAnalysisContent(msgs[firstAssistantIdx].content)
+          setFollowUpMessages(msgs.slice(firstAssistantIdx + 1))
+        } else {
+          setMessages(msgs)
+        }
       }
     } catch {
       toast.error('无法加载会话消息')
     } finally {
       setLoading(false)
     }
-  }, [sessionId, getMessages])
+  }, [sessionId, getMessages, isInitialAnalysis, isAnalysisFromRegistry, analysisContent, chatName, registered])
 
   useEffect(() => {
-    if (!isInitialAnalysis) {
-      loadFromOpencode()
-    }
-  }, [isInitialAnalysis, loadFromOpencode])
+    loadFromOpencode()
+  }, [loadFromOpencode])
 
   useEffect(() => {
     const refs = cardRefs.current
