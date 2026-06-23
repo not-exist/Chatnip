@@ -8,6 +8,7 @@ import ConversationView from '@/components/ConversationView'
 import ChatInput from '@/components/ChatInput'
 import { useOpencode } from '@/hooks/useOpencode'
 import { useAppSelector } from '@/store'
+import { getRegisteredSession } from '@/store/sessionRegistry'
 import { parseDimensions } from '@/prompts/analysis'
 import type { ChatMessage } from '@/types'
 
