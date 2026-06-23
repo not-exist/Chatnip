@@ -29,7 +29,7 @@ export default function SessionDetailPage() {
   const [serverDetectedAnalysis, setServerDetectedAnalysis] = useState(false)
   const registered = getRegisteredSession(sessionId)
   const isAnalysisFromRegistry = !!(registered?.features?.length)
-  const isInitialAnalysis = isAnalysisFromRegistry || !!analysisContent || serverDetectedAnalysis
+  const isAnalysisSession = isAnalysisFromRegistry || !!analysisContent || serverDetectedAnalysis
   const dimensions = useMemo(
     () => (analysisContent ? parseDimensions(analysisContent) : []),
     [analysisContent],
@@ -46,6 +46,16 @@ export default function SessionDetailPage() {
 
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const sendingRef = useRef(false)
+  const isAnalysisSessionRef = useRef(isAnalysisSession)
+  isAnalysisSessionRef.current = isAnalysisSession
+  const analysisContentRef = useRef(analysisContent)
+  analysisContentRef.current = analysisContent
+  const chatNameRef = useRef(chatName)
+  chatNameRef.current = chatName
+  const isAnalysisFromRegistryRef = useRef(isAnalysisFromRegistry)
+  isAnalysisFromRegistryRef.current = isAnalysisFromRegistry
+  const registeredRef = useRef(registered)
+  registeredRef.current = registered
 
   const loadFromOpencode = useCallback(async () => {
     try {
@@ -59,8 +69,8 @@ export default function SessionDetailPage() {
         const text =
           m.parts
             ?.filter((p) => p.type === 'text')
-            .map((p) => (p as { text: string }).text)
-            .join('\n') || ''
+            ?.map((p) => (p as { text: string }).text)
+            ?.join('\n') || ''
         return {
           role: (m.info.role as ChatMessage['role']) || 'assistant',
           content: text,
@@ -68,15 +78,15 @@ export default function SessionDetailPage() {
         }
       })
 
-      if (isInitialAnalysis || isAnalysisFromRegistry) {
+      if (isAnalysisSessionRef.current || isAnalysisFromRegistryRef.current) {
         const firstAssistantIdx = msgs.findIndex((m) => m.role === 'assistant')
         if (firstAssistantIdx >= 0) {
-          if (!analysisContent) {
+          if (!analysisContentRef.current) {
             setAnalysisContent(msgs[firstAssistantIdx].content)
           }
           setFollowUpMessages(msgs.slice(firstAssistantIdx + 1))
-          if (!chatName && registered?.chatName) {
-            setChatName(registered.chatName)
+          if (!chatNameRef.current && registeredRef.current?.chatName) {
+            setChatName(registeredRef.current.chatName)
           }
         } else {
           console.warn('[SessionDetail] 分析会话中未找到 assistant 消息，按非分析会话处理')
@@ -87,6 +97,7 @@ export default function SessionDetailPage() {
         const firstAssistantIdx = msgs.findIndex((m) => m.role === 'assistant')
         if (firstAssistantIdx >= 0 && msgs[firstAssistantIdx].content.includes('## ')) {
           // 检测到分析内容特征，切换为分析模式
+          console.warn('[SessionDetail] 通过 ## 特征兜底检测到分析会话')
           setServerDetectedAnalysis(true)
           setAnalysisContent(msgs[firstAssistantIdx].content)
           setFollowUpMessages(msgs.slice(firstAssistantIdx + 1))
@@ -99,7 +110,7 @@ export default function SessionDetailPage() {
     } finally {
       setLoading(false)
     }
-  }, [sessionId, getMessages, isInitialAnalysis, isAnalysisFromRegistry, analysisContent, chatName, registered])
+  }, [sessionId, getMessages])
 
   useEffect(() => {
     loadFromOpencode()
@@ -122,7 +133,7 @@ export default function SessionDetailPage() {
 
     const userMsg: ChatMessage = { role: 'user', content: text, timestamp: Date.now() }
 
-    if (isInitialAnalysis) {
+    if (isAnalysisSession) {
       setFollowUpMessages((prev) => [...prev, userMsg])
       setShowFollowUpHistory(true)
     } else {
@@ -146,14 +157,14 @@ export default function SessionDetailPage() {
         timestamp: Date.now(),
       }
 
-      if (isInitialAnalysis) {
+      if (isAnalysisSession) {
         setFollowUpMessages((prev) => [...prev, assistantMsg])
       } else {
         setMessages((prev) => [...prev, assistantMsg])
       }
     } catch {
       toast.error('发送失败')
-      if (isInitialAnalysis) {
+      if (isAnalysisSession) {
         setFollowUpMessages((prev) => {
           if (prev.length === 0) return prev
           if (prev[prev.length - 1].role !== 'user') return prev
@@ -195,7 +206,7 @@ export default function SessionDetailPage() {
           <h1 className="text-xl font-bold">
             {chatName ? `分析: ${chatName}` : '分析结果'}
           </h1>
-          {isInitialAnalysis && (
+          {isAnalysisSession && (
             <p className="text-sm text-gray-500">可在下方追问更多细节</p>
           )}
         </div>
@@ -203,7 +214,7 @@ export default function SessionDetailPage() {
 
       <Separator />
 
-      {isInitialAnalysis && dimensions.length > 0 && (
+      {isAnalysisSession && dimensions.length > 0 && (
         <>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {dimensions.map((dim) => (
@@ -237,14 +248,14 @@ export default function SessionDetailPage() {
         </>
       )}
 
-      {!isInitialAnalysis && (
+      {!isAnalysisSession && (
         <div className="min-h-[300px]">
           <ConversationView messages={messages} />
         </div>
       )}
 
       <div className="sticky bottom-0 bg-white/85 dark:bg-gray-950/85 backdrop-blur-md py-4 -mx-4 px-4 border-t border-gray-100 dark:border-white/10 space-y-4">
-        {isInitialAnalysis && (
+        {isAnalysisSession && (
           <div className="flex items-center gap-3">
             <Separator className="flex-1" />
             <span className="text-xs text-gray-400 font-medium shrink-0">
@@ -258,11 +269,11 @@ export default function SessionDetailPage() {
           onSend={handleSend}
           disabled={sending}
           placeholder={
-            isInitialAnalysis ? '输入更多分析需求...' : '追问更多分析细节...'
+            isAnalysisSession ? '输入更多分析需求...' : '追问更多分析细节...'
           }
         />
 
-        {isInitialAnalysis && followUpMessages.length > 0 && (
+        {isAnalysisSession && followUpMessages.length > 0 && (
           <div>
             <Button
               variant="ghost"
