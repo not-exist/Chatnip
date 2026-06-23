@@ -8,6 +8,7 @@ import ConversationView from '@/components/ConversationView'
 import ChatInput from '@/components/ChatInput'
 import { useOpencode } from '@/hooks/useOpencode'
 import { useAppSelector } from '@/store'
+import { getRegisteredSession } from '@/store/sessionRegistry'
 import { parseDimensions } from '@/prompts/analysis'
 import type { ChatMessage } from '@/types'
 
@@ -17,15 +18,21 @@ export default function SessionDetailPage() {
   const navigate = useNavigate()
   const sessionId = id!
 
-  const initialContent =
+  const [analysisContent, setAnalysisContent] = useState(
     (location.state as { initialContent?: string })?.initialContent || ''
-  const chatName =
-    (location.state as { chatName?: string })?.chatName || ''
-
-  const isInitialAnalysis = !!initialContent
+  )
+  const [chatName, setChatName] = useState(
+    (location.state as { chatName?: string })?.chatName ||
+    getRegisteredSession(sessionId)?.chatName ||
+    ''
+  )
+  const [serverDetectedAnalysis, setServerDetectedAnalysis] = useState(false)
+  const registered = getRegisteredSession(sessionId)
+  const isAnalysisFromRegistry = !!(registered?.features?.length)
+  const isAnalysisSession = isAnalysisFromRegistry || !!analysisContent || serverDetectedAnalysis
   const dimensions = useMemo(
-    () => (initialContent ? parseDimensions(initialContent) : []),
-    [initialContent],
+    () => (analysisContent ? parseDimensions(analysisContent) : []),
+    [analysisContent],
   )
 
   const defaultModel = useAppSelector((s) => s.settings.defaultModel)
@@ -34,29 +41,69 @@ export default function SessionDetailPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [followUpMessages, setFollowUpMessages] = useState<ChatMessage[]>([])
   const [sending, setSending] = useState(false)
-  const [loading, setLoading] = useState(isInitialAnalysis ? false : true)
+  const [loading, setLoading] = useState(!analysisContent)
   const [showFollowUpHistory, setShowFollowUpHistory] = useState(false)
 
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const sendingRef = useRef(false)
+  const isAnalysisSessionRef = useRef(isAnalysisSession)
+  isAnalysisSessionRef.current = isAnalysisSession
+  const analysisContentRef = useRef(analysisContent)
+  analysisContentRef.current = analysisContent
+  const chatNameRef = useRef(chatName)
+  chatNameRef.current = chatName
+  const isAnalysisFromRegistryRef = useRef(isAnalysisFromRegistry)
+  isAnalysisFromRegistryRef.current = isAnalysisFromRegistry
+  const registeredRef = useRef(registered)
+  registeredRef.current = registered
 
   const loadFromOpencode = useCallback(async () => {
     try {
       const result = await getMessages(sessionId)
-      if (result && result.length > 0) {
-        const msgs: ChatMessage[] = result.map((m) => {
-          const text =
-            m.parts
-              ?.filter((p) => p.type === 'text')
-              .map((p) => (p as { text: string }).text)
-              .join('\n') || ''
-          return {
-            role: (m.info.role as ChatMessage['role']) || 'assistant',
-            content: text,
-            timestamp: m.info.time?.created,
+      if (!result || result.length === 0) {
+        setLoading(false)
+        return
+      }
+
+      const msgs: ChatMessage[] = result.map((m) => {
+        const text =
+          m.parts
+            ?.filter((p) => p.type === 'text')
+            ?.map((p) => (p as { text: string }).text)
+            ?.join('\n') || ''
+        return {
+          role: (m.info.role as ChatMessage['role']) || 'assistant',
+          content: text,
+          timestamp: m.info.time?.created,
+        }
+      })
+
+      if (isAnalysisSessionRef.current || isAnalysisFromRegistryRef.current) {
+        const firstAssistantIdx = msgs.findIndex((m) => m.role === 'assistant')
+        if (firstAssistantIdx >= 0) {
+          if (!analysisContentRef.current) {
+            setAnalysisContent(msgs[firstAssistantIdx].content)
           }
-        })
-        setMessages(msgs)
+          setFollowUpMessages(msgs.slice(firstAssistantIdx + 1))
+          if (!chatNameRef.current && registeredRef.current?.chatName) {
+            setChatName(registeredRef.current.chatName)
+          }
+        } else {
+          console.warn('[SessionDetail] 分析会话中未找到 assistant 消息，按非分析会话处理')
+          setMessages(msgs)
+        }
+      } else {
+        // 非分析会话：检查是否需要 `##` 兜底检测
+        const firstAssistantIdx = msgs.findIndex((m) => m.role === 'assistant')
+        if (firstAssistantIdx >= 0 && msgs[firstAssistantIdx].content.includes('## ')) {
+          // 检测到分析内容特征，切换为分析模式
+          console.warn('[SessionDetail] 通过 ## 特征兜底检测到分析会话')
+          setServerDetectedAnalysis(true)
+          setAnalysisContent(msgs[firstAssistantIdx].content)
+          setFollowUpMessages(msgs.slice(firstAssistantIdx + 1))
+        } else {
+          setMessages(msgs)
+        }
       }
     } catch {
       toast.error('无法加载会话消息')
@@ -66,10 +113,8 @@ export default function SessionDetailPage() {
   }, [sessionId, getMessages])
 
   useEffect(() => {
-    if (!isInitialAnalysis) {
-      loadFromOpencode()
-    }
-  }, [isInitialAnalysis, loadFromOpencode])
+    loadFromOpencode()
+  }, [loadFromOpencode])
 
   useEffect(() => {
     const refs = cardRefs.current
@@ -88,7 +133,7 @@ export default function SessionDetailPage() {
 
     const userMsg: ChatMessage = { role: 'user', content: text, timestamp: Date.now() }
 
-    if (isInitialAnalysis) {
+    if (isAnalysisSession) {
       setFollowUpMessages((prev) => [...prev, userMsg])
       setShowFollowUpHistory(true)
     } else {
@@ -112,14 +157,14 @@ export default function SessionDetailPage() {
         timestamp: Date.now(),
       }
 
-      if (isInitialAnalysis) {
+      if (isAnalysisSession) {
         setFollowUpMessages((prev) => [...prev, assistantMsg])
       } else {
         setMessages((prev) => [...prev, assistantMsg])
       }
     } catch {
       toast.error('发送失败')
-      if (isInitialAnalysis) {
+      if (isAnalysisSession) {
         setFollowUpMessages((prev) => {
           if (prev.length === 0) return prev
           if (prev[prev.length - 1].role !== 'user') return prev
@@ -161,7 +206,7 @@ export default function SessionDetailPage() {
           <h1 className="text-xl font-bold">
             {chatName ? `分析: ${chatName}` : '分析结果'}
           </h1>
-          {isInitialAnalysis && (
+          {isAnalysisSession && (
             <p className="text-sm text-gray-500">可在下方追问更多细节</p>
           )}
         </div>
@@ -169,7 +214,7 @@ export default function SessionDetailPage() {
 
       <Separator />
 
-      {isInitialAnalysis && dimensions.length > 0 && (
+      {isAnalysisSession && dimensions.length > 0 && (
         <>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {dimensions.map((dim) => (
@@ -203,14 +248,14 @@ export default function SessionDetailPage() {
         </>
       )}
 
-      {!isInitialAnalysis && (
+      {!isAnalysisSession && (
         <div className="min-h-[300px]">
           <ConversationView messages={messages} />
         </div>
       )}
 
       <div className="sticky bottom-0 bg-white/85 dark:bg-gray-950/85 backdrop-blur-md py-4 -mx-4 px-4 border-t border-gray-100 dark:border-white/10 space-y-4">
-        {isInitialAnalysis && (
+        {isAnalysisSession && (
           <div className="flex items-center gap-3">
             <Separator className="flex-1" />
             <span className="text-xs text-gray-400 font-medium shrink-0">
@@ -224,11 +269,11 @@ export default function SessionDetailPage() {
           onSend={handleSend}
           disabled={sending}
           placeholder={
-            isInitialAnalysis ? '输入更多分析需求...' : '追问更多分析细节...'
+            isAnalysisSession ? '输入更多分析需求...' : '追问更多分析细节...'
           }
         />
 
-        {isInitialAnalysis && followUpMessages.length > 0 && (
+        {isAnalysisSession && followUpMessages.length > 0 && (
           <div>
             <Button
               variant="ghost"
