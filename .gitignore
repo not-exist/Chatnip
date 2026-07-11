@@ -25,6 +25,14 @@ vite-output.log
 # HelloAGENTS – plans, sessions, state, knowledge base
 .helloagents/
 
+# Agent tooling & local worktrees
+.opencode/
+.claude/
+
+# Temp scratch files
+tmp-*.cjs
+tmp-*.json
+
 # IDE
 .vscode/
 .idea/
