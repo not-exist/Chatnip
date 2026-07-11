@@ -9,7 +9,7 @@ import ChatInput from '@/components/ChatInput'
 import { useOpencode } from '@/hooks/useOpencode'
 import { useAppSelector } from '@/store'
 import { getRegisteredSession } from '@/store/sessionRegistry'
-import { parseDimensions } from '@/prompts/analysis'
+import { parseDimensions, reconstructSession } from '@/prompts/analysis'
 import type { ChatMessage } from '@/types'
 
 export default function SessionDetailPage() {
@@ -46,6 +46,9 @@ export default function SessionDetailPage() {
 
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const sendingRef = useRef(false)
+  // Once the user has sent a follow-up, a late-resolving initial load must not
+  // clobber the optimistic follow-up state with its stale server snapshot.
+  const hasInteractedRef = useRef(false)
   const isAnalysisSessionRef = useRef(isAnalysisSession)
   isAnalysisSessionRef.current = isAnalysisSession
   const analysisContentRef = useRef(analysisContent)
@@ -65,6 +68,14 @@ export default function SessionDetailPage() {
         return
       }
 
+      // Race guard: if the user already sent a follow-up while this initial
+      // load was in flight, its stale snapshot must not overwrite the live
+      // optimistic state.
+      if (hasInteractedRef.current) {
+        setLoading(false)
+        return
+      }
+
       const msgs: ChatMessage[] = result.map((m) => {
         const text =
           m.parts
@@ -78,32 +89,30 @@ export default function SessionDetailPage() {
         }
       })
 
-      if (isAnalysisSessionRef.current || isAnalysisFromRegistryRef.current) {
-        const firstAssistantIdx = msgs.findIndex((m) => m.role === 'assistant')
-        if (firstAssistantIdx >= 0) {
-          if (!analysisContentRef.current) {
-            setAnalysisContent(msgs[firstAssistantIdx].content)
-          }
-          setFollowUpMessages(msgs.slice(firstAssistantIdx + 1))
-          if (!chatNameRef.current && registeredRef.current?.chatName) {
-            setChatName(registeredRef.current.chatName)
-          }
-        } else {
-          console.warn('[SessionDetail] 分析会话中未找到 assistant 消息，按非分析会话处理')
-          setMessages(msgs)
-        }
-      } else {
-        // 非分析会话：检查是否需要 `##` 兜底检测
-        const firstAssistantIdx = msgs.findIndex((m) => m.role === 'assistant')
-        if (firstAssistantIdx >= 0 && msgs[firstAssistantIdx].content.includes('## ')) {
-          // 检测到分析内容特征，切换为分析模式
+      const knownIsAnalysis =
+        isAnalysisSessionRef.current || isAnalysisFromRegistryRef.current
+      const { isAnalysis, analysisContent: report, followUpMessages: followUps, plainMessages } =
+        reconstructSession(msgs, knownIsAnalysis)
+
+      if (isAnalysis) {
+        // Server-detected analysis (## fallback) that the registry/state didn't
+        // already know about — propagate so the analysis UI renders.
+        if (!knownIsAnalysis) {
           console.warn('[SessionDetail] 通过 ## 特征兜底检测到分析会话')
           setServerDetectedAnalysis(true)
-          setAnalysisContent(msgs[firstAssistantIdx].content)
-          setFollowUpMessages(msgs.slice(firstAssistantIdx + 1))
-        } else {
-          setMessages(msgs)
         }
+        if (!analysisContentRef.current) {
+          setAnalysisContent(report)
+        }
+        setFollowUpMessages(followUps)
+        if (!chatNameRef.current && registeredRef.current?.chatName) {
+          setChatName(registeredRef.current.chatName)
+        }
+      } else {
+        if (knownIsAnalysis) {
+          console.warn('[SessionDetail] 分析会话中未找到有内容的 assistant 消息，按普通对话处理')
+        }
+        setMessages(plainMessages)
       }
     } catch {
       toast.error('无法加载会话消息')
@@ -131,14 +140,20 @@ export default function SessionDetailPage() {
   const handleSend = async (text: string) => {
     if (sendingRef.current) return
 
-    const userMsg: ChatMessage = { role: 'user', content: text, timestamp: Date.now() }
+    // Mark interaction so a late-resolving initial load won't clobber this.
+    hasInteractedRef.current = true
+    const setList = isAnalysisSession ? setFollowUpMessages : setMessages
+    // Drop a trailing optimistic user message (used to roll back on failure).
+    const rollback = () =>
+      setList((prev) =>
+        prev.length > 0 && prev[prev.length - 1].role === 'user'
+          ? prev.slice(0, -1)
+          : prev,
+      )
 
-    if (isAnalysisSession) {
-      setFollowUpMessages((prev) => [...prev, userMsg])
-      setShowFollowUpHistory(true)
-    } else {
-      setMessages((prev) => [...prev, userMsg])
-    }
+    const userMsg: ChatMessage = { role: 'user', content: text, timestamp: Date.now() }
+    setList((prev) => [...prev, userMsg])
+    if (isAnalysisSession) setShowFollowUpHistory(true)
 
     sendingRef.current = true
     setSending(true)
@@ -149,34 +164,27 @@ export default function SessionDetailPage() {
         result.parts
           ?.filter((p) => p.type === 'text')
           .map((p) => (p as { text: string }).text)
-          .join('\n') || ''
+          .join('\n')
+          .trim() || ''
+
+      // An empty reply means the model emitted only tool/reasoning steps and no
+      // text. Don't insert an empty bubble (it would vanish on refresh, since
+      // reconstructSession filters empty assistants); roll back and report.
+      if (!assistantText) {
+        rollback()
+        toast.error('未获得回复，请重试')
+        return
+      }
 
       const assistantMsg: ChatMessage = {
         role: 'assistant',
         content: assistantText,
         timestamp: Date.now(),
       }
-
-      if (isAnalysisSession) {
-        setFollowUpMessages((prev) => [...prev, assistantMsg])
-      } else {
-        setMessages((prev) => [...prev, assistantMsg])
-      }
+      setList((prev) => [...prev, assistantMsg])
     } catch {
+      rollback()
       toast.error('发送失败')
-      if (isAnalysisSession) {
-        setFollowUpMessages((prev) => {
-          if (prev.length === 0) return prev
-          if (prev[prev.length - 1].role !== 'user') return prev
-          return prev.slice(0, -1)
-        })
-      } else {
-        setMessages((prev) => {
-          if (prev.length === 0) return prev
-          if (prev[prev.length - 1].role !== 'user') return prev
-          return prev.slice(0, -1)
-        })
-      }
     } finally {
       sendingRef.current = false
       setSending(false)
