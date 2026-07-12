@@ -188,6 +188,16 @@ export default function SessionDetailPage() {
       console.error('[SessionDetail] 发送失败', err)
       rollback()
       toast.error('发送失败')
+      // If the rollback emptied the list, this send left no trace. Lift the
+      // race guard so a still-in-flight (or future) initial load can repopulate
+      // from the server — otherwise the guard stays latched forever and the
+      // page can strand blank despite the server holding the full history.
+      setList((prev) => {
+        if (prev.length === 0) {
+          hasInteractedRef.current = false
+        }
+        return prev
+      })
     } finally {
       sendingRef.current = false
       setSending(false)

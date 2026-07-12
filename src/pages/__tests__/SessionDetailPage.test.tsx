@@ -141,6 +141,56 @@ describe('SessionDetailPage', () => {
     expect(screen.getByText('第一条回复')).toBeDefined()
   })
 
+  // BUG GUARD (C1): the race guard must LIFT when a failed send rolls the list
+  // back to empty. Otherwise `hasInteractedRef` stays latched, a still-in-flight
+  // initial load returns early forever, and the page strands blank despite the
+  // server holding the full history.
+  it('lifts the race guard after a failed send empties the list, so a late load repopulates', async () => {
+    // Initial load stays in-flight until we resolve it by hand — simulating a
+    // slow fetch that lands AFTER the user already sent (and failed) a follow-up.
+    let resolveLoad!: (v: unknown[]) => void
+    getMessagesMock.mockReturnValue(
+      new Promise((res) => {
+        resolveLoad = res as (v: unknown[]) => void
+      }),
+    )
+    sendPromptMock.mockRejectedValue(new Error('network down'))
+
+    // Render as an analysis session via router state so content shows
+    // (loading=false) and the ChatInput is usable while the load is pending.
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/sessions/s1',
+            state: { initialContent: '## 基础总结\n初始报告', chatName: '测试群' },
+          },
+        ]}
+      >
+        <Routes>
+          <Route path="/sessions/:id" element={<SessionDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    // Send a follow-up that fails: guard latches true, then must lift on rollback.
+    submitFollowUp('会失败的追问', ANALYSIS_PLACEHOLDER)
+    await waitFor(() => expect(toastErrorMock).toHaveBeenCalledWith('发送失败'))
+    await waitFor(() => expect(screen.queryByText('会失败的追问')).toBeNull())
+
+    // The slow initial load now resolves with real server history. With the
+    // guard lifted, its reconstructed follow-ups must render (not be discarded).
+    resolveLoad([
+      msg('user', '分析这段聊天'),
+      msg('assistant', '## 基础总结\n初始报告'),
+      msg('user', '服务端的追问'),
+      msg('assistant', '服务端的回复'),
+    ])
+
+    expect(await screen.findByText('服务端的追问')).toBeDefined()
+    expect(await screen.findByText('服务端的回复')).toBeDefined()
+  })
+
   // BUG GUARD: blank-page fallback — a known-analysis session whose assistant
   // messages are all empty steps reconstructs to isAnalysis:false; the page must
   // still render the conversation instead of going blank.
