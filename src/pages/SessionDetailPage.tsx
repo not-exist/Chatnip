@@ -12,6 +12,16 @@ import { getRegisteredSession } from '@/store/sessionRegistry'
 import { parseDimensions, reconstructSession } from '@/prompts/analysis'
 import type { ChatMessage } from '@/types'
 
+/** Concatenate the text of every `text` part of an opencode message. */
+function extractText(parts?: Array<{ type: string; text?: string }>): string {
+  return (
+    parts
+      ?.filter((p) => p.type === 'text')
+      .map((p) => p.text ?? '')
+      .join('\n') || ''
+  )
+}
+
 export default function SessionDetailPage() {
   const { id } = useParams<{ id: string }>()
   const location = useLocation()
@@ -76,18 +86,11 @@ export default function SessionDetailPage() {
         return
       }
 
-      const msgs: ChatMessage[] = result.map((m) => {
-        const text =
-          m.parts
-            ?.filter((p) => p.type === 'text')
-            ?.map((p) => (p as { text: string }).text)
-            ?.join('\n') || ''
-        return {
-          role: (m.info.role as ChatMessage['role']) || 'assistant',
-          content: text,
-          timestamp: m.info.time?.created,
-        }
-      })
+      const msgs: ChatMessage[] = result.map((m) => ({
+        role: (m.info?.role as ChatMessage['role']) || 'assistant',
+        content: extractText(m.parts),
+        timestamp: m.info?.time?.created,
+      }))
 
       const knownIsAnalysis =
         isAnalysisSessionRef.current || isAnalysisFromRegistryRef.current
@@ -114,7 +117,8 @@ export default function SessionDetailPage() {
         }
         setMessages(plainMessages)
       }
-    } catch {
+    } catch (err) {
+      console.error('[SessionDetail] 加载会话消息失败', err)
       toast.error('无法加载会话消息')
     } finally {
       setLoading(false)
@@ -160,18 +164,14 @@ export default function SessionDetailPage() {
 
     try {
       const result = await sendPrompt(sessionId, text, defaultModel)
-      const assistantText =
-        result.parts
-          ?.filter((p) => p.type === 'text')
-          .map((p) => (p as { text: string }).text)
-          .join('\n')
-          .trim() || ''
+      const assistantText = extractText(result.parts).trim()
 
       // An empty reply means the model emitted only tool/reasoning steps and no
-      // text. Don't insert an empty bubble (it would vanish on refresh, since
-      // reconstructSession filters empty assistants); roll back and report.
+      // text. The prompt (user message) is ALREADY persisted server-side, so we
+      // must NOT roll back the optimistic user bubble — doing so would make the
+      // question vanish here yet reappear on refresh (client/server divergence).
+      // Keep it visible and just surface the failure.
       if (!assistantText) {
-        rollback()
         toast.error('未获得回复，请重试')
         return
       }
@@ -182,7 +182,10 @@ export default function SessionDetailPage() {
         timestamp: Date.now(),
       }
       setList((prev) => [...prev, assistantMsg])
-    } catch {
+    } catch (err) {
+      // The request threw before the turn was accepted; the optimistic user
+      // message was not persisted, so rolling it back keeps us consistent.
+      console.error('[SessionDetail] 发送失败', err)
       rollback()
       toast.error('发送失败')
     } finally {
@@ -256,7 +259,10 @@ export default function SessionDetailPage() {
         </>
       )}
 
-      {!isAnalysisSession && (
+      {/* Render the plain conversation for non-analysis sessions, and also as a
+          fallback when a known-analysis session produced no report (messages is
+          only populated via that fallback branch) — otherwise the page is blank. */}
+      {(!isAnalysisSession || messages.length > 0) && (
         <div className="min-h-[300px]">
           <ConversationView messages={messages} />
         </div>
