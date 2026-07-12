@@ -56,8 +56,17 @@ export default function SessionDetailPage() {
 
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const sendingRef = useRef(false)
-  // Once the user has sent a follow-up, a late-resolving initial load must not
-  // clobber the optimistic follow-up state with its stale server snapshot.
+
+  // The refs below mirror render-derived state so `loadFromOpencode` (a
+  // useCallback) can read the latest values WITHOUT listing them as deps.
+  // Depending on the state directly would rebuild the callback on every
+  // keystroke, re-run the mount effect, and refetch in a loop. Each mirror is
+  // reassigned on the line right after its useRef, so it always tracks render.
+  //
+  // `hasInteractedRef` is the exception — a latch, not a mirror. Once the user
+  // sends a follow-up it stays true so a late-resolving initial load can't
+  // clobber the optimistic state with a stale server snapshot. It is lifted
+  // again only when a failed send rolls the list back to empty (see handleSend).
   const hasInteractedRef = useRef(false)
   const isAnalysisSessionRef = useRef(isAnalysisSession)
   isAnalysisSessionRef.current = isAnalysisSession
