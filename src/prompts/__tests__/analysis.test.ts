@@ -96,6 +96,17 @@ describe('reconstructSession', () => {
     expect(r.plainMessages).toHaveLength(1)
   })
 
+  // BUG GUARD (m6): empty input must not throw (findIndex → -1) and must yield a
+  // safe non-analysis result, even when the caller insists it's an analysis.
+  it('returns a safe non-analysis result for an empty message array', () => {
+    const r = reconstructSession([], true)
+
+    expect(r.isAnalysis).toBe(false)
+    expect(r.analysisContent).toBe('')
+    expect(r.plainMessages).toHaveLength(0)
+    expect(r.followUpMessages).toHaveLength(0)
+  })
+
   it('does NOT misclassify a plain reply that only mentions "## " mid-text', () => {
     const messages: ChatMessage[] = [
       user('markdown 里二级标题怎么写？'),

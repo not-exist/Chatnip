@@ -3,6 +3,10 @@ name: CI
 on:
   push:
     branches: [master]
+  # SECURITY: runs on ALL pull requests, including those from forks. GITHUB_TOKEN
+  # is read-only (see permissions below), but CI still executes fork-authored code
+  # (npm scripts, tests). The repo MUST keep "Require approval for all outside
+  # collaborators" enabled: Settings → Actions → General → Fork pull request workflows.
   pull_request:
 
 concurrency:

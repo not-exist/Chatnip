@@ -37,9 +37,15 @@ export default function SessionDetailPage() {
     ''
   )
   const [serverDetectedAnalysis, setServerDetectedAnalysis] = useState(false)
+  // A known-analysis session whose messages carry no actual report (all
+  // assistant steps were empty) is downgraded to a plain conversation so the
+  // UI shows a single thread instead of splitting old messages from follow-ups.
+  const [downgradedToPlain, setDowngradedToPlain] = useState(false)
   const registered = getRegisteredSession(sessionId)
   const isAnalysisFromRegistry = !!(registered?.features?.length)
-  const isAnalysisSession = isAnalysisFromRegistry || !!analysisContent || serverDetectedAnalysis
+  const isAnalysisSession =
+    !downgradedToPlain &&
+    (isAnalysisFromRegistry || !!analysisContent || serverDetectedAnalysis)
   const dimensions = useMemo(
     () => (analysisContent ? parseDimensions(analysisContent) : []),
     [analysisContent],
@@ -74,8 +80,6 @@ export default function SessionDetailPage() {
   analysisContentRef.current = analysisContent
   const chatNameRef = useRef(chatName)
   chatNameRef.current = chatName
-  const isAnalysisFromRegistryRef = useRef(isAnalysisFromRegistry)
-  isAnalysisFromRegistryRef.current = isAnalysisFromRegistry
   const registeredRef = useRef(registered)
   registeredRef.current = registered
 
@@ -95,14 +99,24 @@ export default function SessionDetailPage() {
         return
       }
 
-      const msgs: ChatMessage[] = result.map((m) => ({
-        role: (m.info?.role as ChatMessage['role']) || 'assistant',
-        content: extractText(m.parts),
-        timestamp: m.info?.time?.created,
-      }))
+      const msgs: ChatMessage[] = result.map((m) => {
+        const role = m.info?.role
+        if (!role) {
+          // A missing role means the SDK shape drifted; surface it instead of
+          // silently mislabeling the message (a role-less "user" turn wrongly
+          // tagged 'assistant' could be picked as the analysis report).
+          console.warn('[SessionDetail] 消息缺少 role 字段，回退为 assistant', m.info)
+        }
+        return {
+          role: (role as ChatMessage['role']) || 'assistant',
+          content: extractText(m.parts),
+          timestamp: m.info?.time?.created,
+        }
+      })
 
-      const knownIsAnalysis =
-        isAnalysisSessionRef.current || isAnalysisFromRegistryRef.current
+      // isAnalysisSession already subsumes isAnalysisFromRegistry, so mirroring
+      // just that one ref is enough to know the caller-side analysis intent.
+      const knownIsAnalysis = isAnalysisSessionRef.current
       const { isAnalysis, analysisContent: report, followUpMessages: followUps, plainMessages } =
         reconstructSession(msgs, knownIsAnalysis)
 
@@ -123,6 +137,11 @@ export default function SessionDetailPage() {
       } else {
         if (knownIsAnalysis) {
           console.warn('[SessionDetail] 分析会话中未找到有内容的 assistant 消息，按普通对话处理')
+          // Drop the analysis chrome (追问 divider + follow-up history) so the
+          // whole thread renders as one plain conversation. Without this, old
+          // messages sit in the main view while new sends land in the follow-up
+          // list — the same session split across two disjoint views.
+          setDowngradedToPlain(true)
         }
         setMessages(plainMessages)
       }
