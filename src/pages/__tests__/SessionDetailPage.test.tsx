@@ -208,6 +208,52 @@ describe('SessionDetailPage', () => {
     expect(screen.queryByText('暂无消息')).toBeNull()
   })
 
+  // BUG GUARD (C2): a known-analysis session with no report must DOWNGRADE to a
+  // plain thread. Otherwise the old messages sit in the main view while the new
+  // follow-up lands in the separate 追问 list — one session split across two
+  // disjoint views. After downgrade the input placeholder is the plain one and
+  // the follow-up joins the same conversation.
+  it('downgrades to a single plain thread (no split) when analysis has no report', async () => {
+    getRegisteredSessionMock.mockReturnValue({ chatName: '空群', features: ['summary'] })
+    getMessagesMock.mockResolvedValue([
+      msg('user', '请分析我的聊天记录'),
+      msg('assistant', ''), // empty step only — no report
+    ])
+    sendPromptMock.mockResolvedValue({ parts: [{ type: 'text', text: '这是回复' }] })
+
+    renderPage()
+
+    // Old message renders; the analysis-only 追问 placeholder is gone (downgraded).
+    expect(await screen.findByText('请分析我的聊天记录')).toBeDefined()
+    await waitFor(() =>
+      expect(screen.queryByPlaceholderText(ANALYSIS_PLACEHOLDER)).toBeNull(),
+    )
+    const plainInput = screen.getByPlaceholderText(PLAIN_PLACEHOLDER)
+    expect(plainInput).toBeDefined()
+
+    // The follow-up joins the SAME thread (main view), not a separate history.
+    submitFollowUp('继续', PLAIN_PLACEHOLDER)
+    expect(await screen.findByText('这是回复')).toBeDefined()
+    // Both the original and the new reply coexist in one conversation.
+    expect(screen.getByText('请分析我的聊天记录')).toBeDefined()
+    // No 追问历史 toggle appears in a downgraded (plain) session.
+    expect(screen.queryByText(/追问历史/)).toBeNull()
+  })
+
+  // BUG GUARD (m7): a rejected initial load must clear the spinner and surface a
+  // toast — not strand the page on the loading state forever.
+  it('shows an error toast and stops loading when the initial fetch rejects', async () => {
+    getMessagesMock.mockRejectedValue(new Error('network down'))
+
+    renderPage()
+
+    await waitFor(() =>
+      expect(toastErrorMock).toHaveBeenCalledWith('无法加载会话消息'),
+    )
+    // Spinner gone: the loading text is no longer shown.
+    await waitFor(() => expect(screen.queryByText('加载会话消息...')).toBeNull())
+  })
+
   // BUG GUARD: plain conversation — no registry, ordinary reply (no `## `),
   // should render as a normal chat with no dimension cards.
   it('renders a plain conversation with no dimension cards', async () => {
