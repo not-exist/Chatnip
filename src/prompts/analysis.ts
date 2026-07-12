@@ -44,8 +44,11 @@ export function reconstructSession(
   const firstAssistantIdx = cleaned.findIndex((m) => m.role === 'assistant')
   const firstAssistant = firstAssistantIdx >= 0 ? cleaned[firstAssistantIdx] : null
 
+  // Match a level-2 heading at the START of a line, consistent with how
+  // parseDimensions splits sections (/^## /m). A substring check would
+  // misclassify a plain reply that merely mentions "## " mid-text.
   const detectedAnalysis =
-    !knownIsAnalysis && !!firstAssistant && firstAssistant.content.includes('## ')
+    !knownIsAnalysis && !!firstAssistant && /^## /m.test(firstAssistant.content)
   const isAnalysis = (knownIsAnalysis || detectedAnalysis) && firstAssistantIdx >= 0
 
   if (isAnalysis && firstAssistant) {

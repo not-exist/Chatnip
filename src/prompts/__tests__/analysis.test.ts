@@ -95,4 +95,44 @@ describe('reconstructSession', () => {
     expect(r.analysisContent).toBe('')
     expect(r.plainMessages).toHaveLength(1)
   })
+
+  it('does NOT misclassify a plain reply that only mentions "## " mid-text', () => {
+    const messages: ChatMessage[] = [
+      user('markdown 里二级标题怎么写？'),
+      asst('在行首写 "## 标题" 即可，例如段落中出现 ## 不算标题。'),
+    ]
+
+    const r = reconstructSession(messages, false)
+
+    expect(r.isAnalysis).toBe(false)
+    expect(r.plainMessages).toHaveLength(2)
+  })
+
+  it('treats a whitespace-only assistant as an empty step (not an anchor)', () => {
+    const messages: ChatMessage[] = [
+      user('分析这个群聊'),
+      asst('   \n  '), // whitespace-only tool/reasoning step
+      asst('## 基础总结\n内容。'),
+    ]
+
+    const r = reconstructSession(messages, true)
+
+    expect(r.isAnalysis).toBe(true)
+    expect(r.analysisContent).toContain('## 基础总结')
+    expect(r.followUpMessages).toHaveLength(0)
+  })
+
+  it('splits a follow-up round that ends with an empty assistant step', () => {
+    const messages: ChatMessage[] = [
+      user('分析这个群聊'),
+      asst('## 基础总结\n内容。'),
+      user('追问一下'),
+      asst(''), // model produced only tool/reasoning, no text
+    ]
+
+    const r = reconstructSession(messages, true)
+
+    // The dangling user follow-up is retained (server keeps it too).
+    expect(r.followUpMessages.map((m) => m.content)).toEqual(['追问一下'])
+  })
 })
