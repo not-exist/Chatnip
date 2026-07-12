@@ -92,8 +92,8 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-const ANALYSIS_PLACEHOLDER = '输入更多分析需求...'
-const PLAIN_PLACEHOLDER = '追问更多分析细节...'
+const ANALYSIS_PLACEHOLDER = '追问更多分析细节...'
+const PLAIN_PLACEHOLDER = '输入消息...'
 
 describe('SessionDetailPage', () => {
   // BUG GUARD: empty-reply divergence — an empty assistant reply must NOT roll

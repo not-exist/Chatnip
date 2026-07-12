@@ -293,7 +293,7 @@ export default function SessionDetailPage() {
           onSend={handleSend}
           disabled={sending}
           placeholder={
-            isAnalysisSession ? '输入更多分析需求...' : '追问更多分析细节...'
+            isAnalysisSession ? '追问更多分析细节...' : '输入消息...'
           }
         />
 
