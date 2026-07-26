@@ -9,8 +9,18 @@ import ChatInput from '@/components/ChatInput'
 import { useOpencode } from '@/hooks/useOpencode'
 import { useAppSelector } from '@/store'
 import { getRegisteredSession } from '@/store/sessionRegistry'
-import { parseDimensions } from '@/prompts/analysis'
+import { parseDimensions, reconstructSession } from '@/prompts/analysis'
 import type { ChatMessage } from '@/types'
+
+/** Concatenate the text of every `text` part of an opencode message. */
+function extractText(parts?: Array<{ type: string; text?: string }>): string {
+  return (
+    parts
+      ?.filter((p) => p.type === 'text')
+      .map((p) => p.text ?? '')
+      .join('\n') || ''
+  )
+}
 
 export default function SessionDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -27,9 +37,15 @@ export default function SessionDetailPage() {
     ''
   )
   const [serverDetectedAnalysis, setServerDetectedAnalysis] = useState(false)
+  // A known-analysis session whose messages carry no actual report (all
+  // assistant steps were empty) is downgraded to a plain conversation so the
+  // UI shows a single thread instead of splitting old messages from follow-ups.
+  const [downgradedToPlain, setDowngradedToPlain] = useState(false)
   const registered = getRegisteredSession(sessionId)
   const isAnalysisFromRegistry = !!(registered?.features?.length)
-  const isAnalysisSession = isAnalysisFromRegistry || !!analysisContent || serverDetectedAnalysis
+  const isAnalysisSession =
+    !downgradedToPlain &&
+    (isAnalysisFromRegistry || !!analysisContent || serverDetectedAnalysis)
   const dimensions = useMemo(
     () => (analysisContent ? parseDimensions(analysisContent) : []),
     [analysisContent],
@@ -46,14 +62,24 @@ export default function SessionDetailPage() {
 
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const sendingRef = useRef(false)
+
+  // The refs below mirror render-derived state so `loadFromOpencode` (a
+  // useCallback) can read the latest values WITHOUT listing them as deps.
+  // Depending on the state directly would rebuild the callback on every
+  // keystroke, re-run the mount effect, and refetch in a loop. Each mirror is
+  // reassigned on the line right after its useRef, so it always tracks render.
+  //
+  // `hasInteractedRef` is the exception — a latch, not a mirror. Once the user
+  // sends a follow-up it stays true so a late-resolving initial load can't
+  // clobber the optimistic state with a stale server snapshot. It is lifted
+  // again only when a failed send rolls the list back to empty (see handleSend).
+  const hasInteractedRef = useRef(false)
   const isAnalysisSessionRef = useRef(isAnalysisSession)
   isAnalysisSessionRef.current = isAnalysisSession
   const analysisContentRef = useRef(analysisContent)
   analysisContentRef.current = analysisContent
   const chatNameRef = useRef(chatName)
   chatNameRef.current = chatName
-  const isAnalysisFromRegistryRef = useRef(isAnalysisFromRegistry)
-  isAnalysisFromRegistryRef.current = isAnalysisFromRegistry
   const registeredRef = useRef(registered)
   registeredRef.current = registered
 
@@ -65,47 +91,62 @@ export default function SessionDetailPage() {
         return
       }
 
+      // Race guard: if the user already sent a follow-up while this initial
+      // load was in flight, its stale snapshot must not overwrite the live
+      // optimistic state.
+      if (hasInteractedRef.current) {
+        setLoading(false)
+        return
+      }
+
       const msgs: ChatMessage[] = result.map((m) => {
-        const text =
-          m.parts
-            ?.filter((p) => p.type === 'text')
-            ?.map((p) => (p as { text: string }).text)
-            ?.join('\n') || ''
+        const role = m.info?.role
+        if (!role) {
+          // A missing role means the SDK shape drifted; surface it instead of
+          // silently mislabeling the message (a role-less "user" turn wrongly
+          // tagged 'assistant' could be picked as the analysis report).
+          console.warn('[SessionDetail] 消息缺少 role 字段，回退为 assistant', m.info)
+        }
         return {
-          role: (m.info.role as ChatMessage['role']) || 'assistant',
-          content: text,
-          timestamp: m.info.time?.created,
+          role: (role as ChatMessage['role']) || 'assistant',
+          content: extractText(m.parts),
+          timestamp: m.info?.time?.created,
         }
       })
 
-      if (isAnalysisSessionRef.current || isAnalysisFromRegistryRef.current) {
-        const firstAssistantIdx = msgs.findIndex((m) => m.role === 'assistant')
-        if (firstAssistantIdx >= 0) {
-          if (!analysisContentRef.current) {
-            setAnalysisContent(msgs[firstAssistantIdx].content)
-          }
-          setFollowUpMessages(msgs.slice(firstAssistantIdx + 1))
-          if (!chatNameRef.current && registeredRef.current?.chatName) {
-            setChatName(registeredRef.current.chatName)
-          }
-        } else {
-          console.warn('[SessionDetail] 分析会话中未找到 assistant 消息，按非分析会话处理')
-          setMessages(msgs)
-        }
-      } else {
-        // 非分析会话：检查是否需要 `##` 兜底检测
-        const firstAssistantIdx = msgs.findIndex((m) => m.role === 'assistant')
-        if (firstAssistantIdx >= 0 && msgs[firstAssistantIdx].content.includes('## ')) {
-          // 检测到分析内容特征，切换为分析模式
+      // isAnalysisSession already subsumes isAnalysisFromRegistry, so mirroring
+      // just that one ref is enough to know the caller-side analysis intent.
+      const knownIsAnalysis = isAnalysisSessionRef.current
+      const { isAnalysis, analysisContent: report, followUpMessages: followUps, plainMessages } =
+        reconstructSession(msgs, knownIsAnalysis)
+
+      if (isAnalysis) {
+        // Server-detected analysis (## fallback) that the registry/state didn't
+        // already know about — propagate so the analysis UI renders.
+        if (!knownIsAnalysis) {
           console.warn('[SessionDetail] 通过 ## 特征兜底检测到分析会话')
           setServerDetectedAnalysis(true)
-          setAnalysisContent(msgs[firstAssistantIdx].content)
-          setFollowUpMessages(msgs.slice(firstAssistantIdx + 1))
-        } else {
-          setMessages(msgs)
         }
+        if (!analysisContentRef.current) {
+          setAnalysisContent(report)
+        }
+        setFollowUpMessages(followUps)
+        if (!chatNameRef.current && registeredRef.current?.chatName) {
+          setChatName(registeredRef.current.chatName)
+        }
+      } else {
+        if (knownIsAnalysis) {
+          console.warn('[SessionDetail] 分析会话中未找到有内容的 assistant 消息，按普通对话处理')
+          // Drop the analysis chrome (追问 divider + follow-up history) so the
+          // whole thread renders as one plain conversation. Without this, old
+          // messages sit in the main view while new sends land in the follow-up
+          // list — the same session split across two disjoint views.
+          setDowngradedToPlain(true)
+        }
+        setMessages(plainMessages)
       }
-    } catch {
+    } catch (err) {
+      console.error('[SessionDetail] 加载会话消息失败', err)
       toast.error('无法加载会话消息')
     } finally {
       setLoading(false)
@@ -131,52 +172,60 @@ export default function SessionDetailPage() {
   const handleSend = async (text: string) => {
     if (sendingRef.current) return
 
-    const userMsg: ChatMessage = { role: 'user', content: text, timestamp: Date.now() }
+    // Mark interaction so a late-resolving initial load won't clobber this.
+    hasInteractedRef.current = true
+    const setList = isAnalysisSession ? setFollowUpMessages : setMessages
+    // Drop a trailing optimistic user message (used to roll back on failure).
+    const rollback = () =>
+      setList((prev) =>
+        prev.length > 0 && prev[prev.length - 1].role === 'user'
+          ? prev.slice(0, -1)
+          : prev,
+      )
 
-    if (isAnalysisSession) {
-      setFollowUpMessages((prev) => [...prev, userMsg])
-      setShowFollowUpHistory(true)
-    } else {
-      setMessages((prev) => [...prev, userMsg])
-    }
+    const userMsg: ChatMessage = { role: 'user', content: text, timestamp: Date.now() }
+    setList((prev) => [...prev, userMsg])
+    if (isAnalysisSession) setShowFollowUpHistory(true)
 
     sendingRef.current = true
     setSending(true)
 
     try {
       const result = await sendPrompt(sessionId, text, defaultModel)
-      const assistantText =
-        result.parts
-          ?.filter((p) => p.type === 'text')
-          .map((p) => (p as { text: string }).text)
-          .join('\n') || ''
+      const assistantText = extractText(result.parts).trim()
+
+      // An empty reply means the model emitted only tool/reasoning steps and no
+      // text. The prompt (user message) is ALREADY persisted server-side, so we
+      // must NOT roll back the optimistic user bubble — doing so would make the
+      // question vanish here yet reappear on refresh (client/server divergence).
+      // Keep it visible and just surface the failure.
+      if (!assistantText) {
+        toast.error('未获得回复，请重试')
+        return
+      }
 
       const assistantMsg: ChatMessage = {
         role: 'assistant',
         content: assistantText,
         timestamp: Date.now(),
       }
-
-      if (isAnalysisSession) {
-        setFollowUpMessages((prev) => [...prev, assistantMsg])
-      } else {
-        setMessages((prev) => [...prev, assistantMsg])
-      }
-    } catch {
+      setList((prev) => [...prev, assistantMsg])
+    } catch (err) {
+      // The request threw before the turn was accepted; the optimistic user
+      // message was not persisted, so rolling it back keeps us consistent.
+      console.error('[SessionDetail] 发送失败', err)
+      rollback()
       toast.error('发送失败')
-      if (isAnalysisSession) {
-        setFollowUpMessages((prev) => {
-          if (prev.length === 0) return prev
-          if (prev[prev.length - 1].role !== 'user') return prev
-          return prev.slice(0, -1)
-        })
-      } else {
-        setMessages((prev) => {
-          if (prev.length === 0) return prev
-          if (prev[prev.length - 1].role !== 'user') return prev
-          return prev.slice(0, -1)
-        })
-      }
+      // If the rollback emptied the list, this send left no trace. Lift the
+      // race guard so a still-in-flight (or future) initial load can repopulate
+      // from the server — otherwise the guard stays latched forever and the
+      // page can strand blank despite the server holding the full history.
+      setList((prev) => {
+        if (prev.length === 0) {
+          hasInteractedRef.current = false
+        }
+        return prev
+      })
     } finally {
       sendingRef.current = false
       setSending(false)
@@ -248,7 +297,10 @@ export default function SessionDetailPage() {
         </>
       )}
 
-      {!isAnalysisSession && (
+      {/* Render the plain conversation for non-analysis sessions, and also as a
+          fallback when a known-analysis session produced no report (messages is
+          only populated via that fallback branch) — otherwise the page is blank. */}
+      {(!isAnalysisSession || messages.length > 0) && (
         <div className="min-h-[300px]">
           <ConversationView messages={messages} />
         </div>
@@ -269,7 +321,7 @@ export default function SessionDetailPage() {
           onSend={handleSend}
           disabled={sending}
           placeholder={
-            isAnalysisSession ? '输入更多分析需求...' : '追问更多分析细节...'
+            isAnalysisSession ? '追问更多分析细节...' : '输入消息...'
           }
         />
 

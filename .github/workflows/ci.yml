@@ -3,16 +3,36 @@ name: CI
 on:
   push:
     branches: [master]
+  # SECURITY: runs on ALL pull requests, including those from forks. GITHUB_TOKEN
+  # is read-only (see permissions below), but CI still executes fork-authored code
+  # (npm scripts, tests). The repo MUST keep "Require approval for all outside
+  # collaborators" enabled: Settings → Actions → General → Fork pull request workflows.
   pull_request:
-    branches: [master]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Least-privilege: these jobs only read the repo to install/test/build.
+permissions:
+  contents: read
+
 jobs:
-  ci:
-    name: CI
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm test
+
+  quality:
+    name: Lint / Typecheck / Build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -25,4 +45,19 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
-      - run: npm test
+
+  # Aggregate status check. Branch protection (see docs/BRANCH_PROTECTION.md)
+  # requires a check named exactly "CI"; this gate keeps that contract stable
+  # while the real work stays split across the test/quality jobs above.
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    needs: [test, quality]
+    if: always()
+    steps:
+      - name: Verify required jobs succeeded
+        run: |
+          if [ "${{ needs.test.result }}" != "success" ] || [ "${{ needs.quality.result }}" != "success" ]; then
+            echo "test=${{ needs.test.result }} quality=${{ needs.quality.result }}"
+            exit 1
+          fi

@@ -1,9 +1,71 @@
-import type { ChatType, FeatureOption } from '@/types'
+import type { ChatType, FeatureOption, ChatMessage } from '@/types'
 
 export interface DimensionBlock {
   key: string
   label: string
   content: string
+}
+
+export interface ReconstructedSession {
+  /** true if the messages represent an analysis session (has analysisContent) */
+  isAnalysis: boolean
+  /** the first non-empty assistant message — the analysis report (empty string if none) */
+  analysisContent: string
+  /** messages after the analysis report, for the 追问 (follow-up) history */
+  followUpMessages: ChatMessage[]
+  /** for non-analysis sessions: the full conversation to render as-is */
+  plainMessages: ChatMessage[]
+}
+
+/**
+ * Split a session's messages into an analysis report + follow-up history.
+ *
+ * opencode's default `build` agent emits MULTIPLE assistant messages per turn:
+ * intermediate reasoning/tool-call steps carry empty text, and only the final
+ * message holds the answer. Naively taking "the first assistant message" as the
+ * analysis therefore lands on an empty tool-step, losing the report and
+ * mis-splitting the follow-ups. We first drop empty assistant steps, then anchor
+ * the analysis at the first assistant message that actually has content.
+ *
+ * @param messages    all session messages (text already extracted per message)
+ * @param knownIsAnalysis  true when caller already knows this is an analysis
+ *                         session (from registry/state); when false we fall back
+ *                         to detecting a `## ` heading in the first reply.
+ */
+export function reconstructSession(
+  messages: ChatMessage[],
+  knownIsAnalysis: boolean,
+): ReconstructedSession {
+  // Keep every user message; drop assistant messages with no text (tool/reasoning steps).
+  const cleaned = messages.filter(
+    (m) => m.role !== 'assistant' || m.content.trim().length > 0,
+  )
+
+  const firstAssistantIdx = cleaned.findIndex((m) => m.role === 'assistant')
+  const firstAssistant = firstAssistantIdx >= 0 ? cleaned[firstAssistantIdx] : null
+
+  // Match a level-2 heading at the START of a line, consistent with how
+  // parseDimensions splits sections (/^## /m). A substring check would
+  // misclassify a plain reply that merely mentions "## " mid-text.
+  const detectedAnalysis =
+    !knownIsAnalysis && !!firstAssistant && /^## /m.test(firstAssistant.content)
+  const isAnalysis = (knownIsAnalysis || detectedAnalysis) && firstAssistantIdx >= 0
+
+  if (isAnalysis && firstAssistant) {
+    return {
+      isAnalysis: true,
+      analysisContent: firstAssistant.content,
+      followUpMessages: cleaned.slice(firstAssistantIdx + 1),
+      plainMessages: [],
+    }
+  }
+
+  return {
+    isAnalysis: false,
+    analysisContent: '',
+    followUpMessages: [],
+    plainMessages: cleaned,
+  }
 }
 
 export const FEATURE_OPTIONS: FeatureOption[] = [
