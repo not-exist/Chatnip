@@ -8,7 +8,7 @@ import SectionHeader from '@/components/SectionHeader'
 import DateRangePicker from '@/components/DateRangePicker'
 import { useAppSelector, useAppDispatch } from '@/store'
 import { setDefaultModel } from '@/store/settingsSlice'
-import { useNapcatApi } from '@/hooks/useNapcatApi'
+import { useSnowlumaApi } from '@/hooks/useSnowlumaApi'
 import { useOpencode } from '@/hooks/useOpencode'
 import { buildUserPrompt, getSystemPrompt, getFeaturePrompts, formatMessages } from '@/prompts/analysis'
 import { listProviders } from '@/api/opencode'
@@ -28,7 +28,7 @@ export default function NewAnalysisPage() {
   const chatName = (location.state as { chatName?: string })?.chatName || `${type} ${id}`
 
   const { defaultFeatures, defaultModel } = useAppSelector((s) => s.settings)
-  const { getGroupMsgHistory, getFriendMsgHistory } = useNapcatApi()
+  const { getGroupMsgHistory, getFriendMsgHistory } = useSnowlumaApi()
   const { createSession, sendPromptWithFiles } = useOpencode()
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>()

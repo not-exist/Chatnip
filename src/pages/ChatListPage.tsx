@@ -4,7 +4,7 @@ import { Tabs, Input } from '@heroui/react'
 import { FiMessageSquare } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import ChatCard from '@/components/ChatCard'
-import { useNapcatApi } from '@/hooks/useNapcatApi'
+import { useSnowlumaApi } from '@/hooks/useSnowlumaApi'
 import EmptyState from '@/components/EmptyState'
 import type { GroupInfo, FriendInfo, ChatType } from '@/types'
 
@@ -23,7 +23,7 @@ function SkeletonCard() {
 
 export default function ChatListPage() {
   const navigate = useNavigate()
-  const { getGroupList, getFriendList } = useNapcatApi()
+  const { getGroupList, getFriendList } = useSnowlumaApi()
   const [groups, setGroups] = useState<GroupInfo[]>([])
   const [friends, setFriends] = useState<FriendInfo[]>([])
   const [loading, setLoading] = useState(true)
@@ -37,7 +37,7 @@ export default function ChatListPage() {
       setGroups(g)
       setFriends(f)
     } catch {
-      toast.error('无法连接到 NapCat，请检查配置')
+      toast.error('无法连接到 SnowLuma，请检查配置')
     } finally {
       setLoading(false)
     }

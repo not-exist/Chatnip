@@ -4,20 +4,20 @@ import { FiServer, FiCpu, FiSettings, FiCheckCircle } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { useAppSelector, useAppDispatch } from '@/store'
 import {
-  setNapcatConfig,
+  setSnowlumaConfig,
   setOpencodeConfig,
   setDefaultFeatures,
   setDefaultModel,
 } from '@/store/settingsSlice'
 import AnalysisFeatureSelector from '@/components/AnalysisFeatureSelector'
 import SectionHeader from '@/components/SectionHeader'
-import { testConnection as testNapcat } from '@/api/napcat'
+import { testConnection } from '@/api/snowluma'
 import { testOpencodeConnection, listProviders, restartOpencodeServer } from '@/api/opencode'
 import type { ProviderInfo } from '@/types'
 
 export default function SettingsPage() {
   const dispatch = useAppDispatch()
-  const { napcat, opencode, defaultFeatures, defaultModel } = useAppSelector(
+  const { snowluma, opencode, defaultFeatures, defaultModel } = useAppSelector(
     (s) => s.settings,
   )
   const [providers, setProviders] = useState<ProviderInfo[]>([])
@@ -27,14 +27,14 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetch('/__api/napcat-config', {
+      fetch('/__api/snowluma-config', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ host: napcat.host, port: napcat.port }),
+        body: JSON.stringify({ baseUrl: snowluma.baseUrl, accessToken: snowluma.accessToken }),
       }).catch(() => {})
     }, 800)
     return () => clearTimeout(timer)
-  }, [napcat.host, napcat.port])
+  }, [snowluma.baseUrl, snowluma.accessToken])
 
   useEffect(() => {
     listProviders()
@@ -77,12 +77,12 @@ export default function SettingsPage() {
     }
   }
 
-  const handleTestNapcat = async () => {
-    const ok = await testNapcat(napcat)
+  const handleTestSnowluma = async () => {
+    const ok = await testConnection()
     if (ok) {
-      toast.success('NapCat 连接成功')
+      toast.success('SnowLuma 连接成功')
     } else {
-      toast.error('NapCat 连接失败，请检查配置')
+      toast.error('SnowLuma 连接失败，请检查配置')
     }
   }
 
@@ -99,50 +99,37 @@ export default function SettingsPage() {
     <div className="space-y-6 max-w-2xl">
       <div>
         <h1 className="text-2xl font-bold">设置</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">配置 NapCat 与 Opencode 连接</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">配置 SnowLuma 与 Opencode 连接</p>
       </div>
 
       <Card className="border border-gray-200/60 dark:border-white/10 shadow-sm transition-all duration-200 hover:border-gray-300 dark:hover:border-white/20 hover:shadow-md hover:-translate-y-px">
-        <SectionHeader icon={FiServer} title="NapCat 连接配置" variant="primary" />
+        <SectionHeader icon={FiServer} title="SnowLuma 连接配置" variant="primary" />
         <Separator />
         <Card.Content className="space-y-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label htmlFor="napcat-host" className="text-sm font-medium text-gray-700 dark:text-gray-300">主机地址</label>
-              <Input
-                id="napcat-host"
-                value={napcat.host}
-                onChange={(e) => dispatch(setNapcatConfig({ host: e.target.value }))}
-                placeholder="127.0.0.1"
-                className="rounded-xl"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label htmlFor="napcat-port" className="text-sm font-medium text-gray-700 dark:text-gray-300">端口</label>
-              <Input
-                id="napcat-port"
-                type="number"
-                value={String(napcat.port)}
-                onChange={(e) => dispatch(setNapcatConfig({ port: Number(e.target.value) || 3000 }))}
-                placeholder="3000"
-                className="rounded-xl"
-              />
-            </div>
+          <div className="space-y-1.5">
+            <label htmlFor="snowluma-baseurl" className="text-sm font-medium text-gray-700 dark:text-gray-300">服务地址</label>
+            <Input
+              id="snowluma-baseurl"
+              value={snowluma.baseUrl}
+              onChange={(e) => dispatch(setSnowlumaConfig({ baseUrl: e.target.value }))}
+              placeholder="http://127.0.0.1:3000"
+              className="rounded-xl"
+            />
           </div>
           <div className="space-y-1.5">
-            <label htmlFor="napcat-token" className="text-sm font-medium text-gray-700 dark:text-gray-300">Token (可选)</label>
+            <label htmlFor="snowluma-token" className="text-sm font-medium text-gray-700 dark:text-gray-300">Access Token (可选)</label>
             <Input
-              id="napcat-token"
-              value={napcat.token}
-              onChange={(e) => dispatch(setNapcatConfig({ token: e.target.value }))}
-              placeholder="Bearer token"
+              id="snowluma-token"
+              value={snowluma.accessToken}
+              onChange={(e) => dispatch(setSnowlumaConfig({ accessToken: e.target.value }))}
+              placeholder="Access token"
               type="password"
               className="rounded-xl"
             />
           </div>
           <Button
             variant="tertiary"
-            onPress={handleTestNapcat}
+            onPress={handleTestSnowluma}
             className="rounded-xl"
           >
             <FiCheckCircle className="mr-2" />

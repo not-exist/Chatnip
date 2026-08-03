@@ -2,10 +2,9 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import type { SettingsState, ModelInfo } from '@/types'
 import { saveAppState } from '@/api/appState'
 
-const defaultNapcatConfig = {
-  host: '127.0.0.1',
-  port: 3000,
-  token: '',
+const defaultSnowlumaConfig = {
+  baseUrl: 'http://127.0.0.1:3000',
+  accessToken: '',
 }
 
 const defaultOpencodeConfig = {
@@ -36,7 +35,7 @@ function isModelInfo(v: unknown): v is ModelInfo | undefined {
 
 function sanitizeSettings(raw: unknown): SettingsState {
   const defaults: SettingsState = {
-    napcat: { ...defaultNapcatConfig },
+    snowluma: { ...defaultSnowlumaConfig },
     opencode: { ...defaultOpencodeConfig },
     defaultMessageCount: 200,
     defaultFeatures: ['summary', 'topics', 'sentiment'],
@@ -46,12 +45,11 @@ function sanitizeSettings(raw: unknown): SettingsState {
   if (typeof raw !== 'object' || raw === null) return defaults
   const src = raw as Record<string, unknown>
 
-  // napcat validation
-  if (typeof src.napcat === 'object' && src.napcat !== null) {
-    const n = src.napcat as Record<string, unknown>
-    if (isString(n.host)) defaults.napcat.host = n.host
-    if (isNumber(n.port)) defaults.napcat.port = n.port
-    if (isString(n.token)) defaults.napcat.token = n.token
+  // snowluma validation
+  if (typeof src.snowluma === 'object' && src.snowluma !== null) {
+    const n = src.snowluma as Record<string, unknown>
+    if (isString(n.baseUrl)) defaults.snowluma.baseUrl = n.baseUrl
+    if (isString(n.accessToken)) defaults.snowluma.accessToken = n.accessToken
   }
 
   // opencode validation
@@ -111,8 +109,8 @@ const settingsSlice = createSlice({
   name: 'settings',
   initialState,
   reducers: {
-    setNapcatConfig(state, action: PayloadAction<Partial<SettingsState['napcat']>>) {
-      state.napcat = { ...state.napcat, ...action.payload }
+    setSnowlumaConfig(state, action: PayloadAction<Partial<SettingsState['snowluma']>>) {
+      state.snowluma = { ...state.snowluma, ...action.payload }
     },
     setOpencodeConfig(state, action: PayloadAction<Partial<SettingsState['opencode']>>) {
       state.opencode = { ...state.opencode, ...action.payload }
@@ -130,7 +128,7 @@ const settingsSlice = createSlice({
 })
 
 export const {
-  setNapcatConfig,
+  setSnowlumaConfig,
   setOpencodeConfig,
   setDefaultMessageCount,
   setDefaultFeatures,

@@ -1,7 +1,6 @@
-export interface NapCatConfig {
-  host: string
-  port: number
-  token: string
+export interface SnowLumaConfig {
+  baseUrl: string
+  accessToken: string
 }
 
 export interface OpencodeConfig {
@@ -28,7 +27,7 @@ export interface ProviderInfo {
 }
 
 export interface SettingsState {
-  napcat: NapCatConfig
+  snowluma: SnowLumaConfig
   opencode: OpencodeConfig
   defaultMessageCount: number
   defaultFeatures: string[]

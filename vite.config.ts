@@ -5,30 +5,14 @@ import fs from 'fs'
 import { spawn, execSync, type ChildProcess } from 'child_process'
 import net from 'net'
 import type { IncomingMessage, ServerResponse } from 'http'
+import { SnowLumaHttpClient } from '@snowluma/sdk/client'
 
-const NAPCAT_CONFIG_PATH = path.resolve(__dirname, 'napcat-target.json')
 const CHAT_HISTORY_DIR = path.join(
   process.env.LOCALAPPDATA || path.join(process.env.USERPROFILE || '', 'AppData', 'Local'),
   'chatnip',
   'chat-history',
 )
 const APP_STATE_PATH = path.join(CHAT_HISTORY_DIR, '..', 'app-state.json')
-
-interface NapcatTarget {
-  host: string
-  port: number
-}
-
-function readNapcatTarget(): NapcatTarget {
-  try {
-    const raw = fs.readFileSync(NAPCAT_CONFIG_PATH, 'utf-8')
-    const parsed = JSON.parse(raw)
-    if (parsed.host && typeof parsed.port === 'number') {
-      return { host: parsed.host, port: parsed.port }
-    }
-  } catch { /* use defaults */ }
-  return { host: '127.0.0.1', port: 3000 }
-}
 
 function rawBody(req: IncomingMessage): Promise<Buffer | null> {
   return new Promise((resolve) => {
@@ -46,41 +30,6 @@ function filterHeaders(headers: Record<string, string | string[] | undefined>) {
     out[k] = Array.isArray(v) ? v.join(', ') : v ?? ''
   }
   return out
-}
-
-async function napcatProxy(req: IncomingMessage, res: ServerResponse) {
-  if (!req.url?.startsWith('/api/napcat')) return false
-
-  try {
-    const { host, port } = readNapcatTarget()
-    const targetPath = req.url.replace(/^\/api\/napcat/, '') || '/'
-    const targetUrl = new URL(targetPath, `http://${host}:${port}`)
-    const body = await rawBody(req)
-
-    const fetchRes = await fetch(targetUrl, {
-      method: req.method,
-      headers: {
-        ...filterHeaders(req.headers as Record<string, string | string[] | undefined>),
-        host: `${host}:${port}`,
-      },
-      body,
-    })
-
-    res.statusCode = fetchRes.status || 502
-    fetchRes.headers.forEach((v, k) => {
-      if (!skipProxyHeader(k)) res.setHeader(k, v)
-    })
-
-    const resBody = await fetchRes.arrayBuffer()
-    res.end(Buffer.from(resBody))
-  } catch {
-    if (!res.headersSent) {
-      res.statusCode = 502
-      res.setHeader('content-type', 'application/json')
-      res.end(JSON.stringify({ error: 'NapCat 连接失败' }))
-    }
-  }
-  return true
 }
 
 function skipProxyHeader(k: string) {
@@ -323,22 +272,154 @@ function chatnipPlugin() {
         }
       })
 
-      // NapCat dynamic proxy middleware
+      // SnowLuma SDK client management
+      const SNOWLUMA_CONFIG_PATH = path.resolve(__dirname, 'snowluma-config.json')
+
+      interface SnowLumaConfigFile {
+        baseUrl: string
+        accessToken: string
+      }
+
+      function readSnowlumaConfig(): SnowLumaConfigFile {
+        try {
+          const raw = fs.readFileSync(SNOWLUMA_CONFIG_PATH, 'utf-8')
+          const parsed = JSON.parse(raw)
+          if (typeof parsed.baseUrl === 'string') return parsed
+        } catch { /* use defaults */ }
+        return { baseUrl: 'http://127.0.0.1:3000', accessToken: '' }
+      }
+
+      let snowlumaClient: SnowLumaHttpClient | null = null
+
+      function getSnowlumaClient(): SnowLumaHttpClient {
+        if (!snowlumaClient) {
+          const cfg = readSnowlumaConfig()
+          snowlumaClient = new SnowLumaHttpClient({
+            baseUrl: cfg.baseUrl,
+            accessToken: cfg.accessToken,
+            requestTimeoutMs: 30_000,
+          })
+        }
+        return snowlumaClient
+      }
+
+      // SnowLuma API endpoints
       server.middlewares.use(async (req, res, next) => {
-        if (await napcatProxy(req, res)) return
+        if (req.method === 'GET' && req.url === '/api/snowluma/group_list') {
+          try {
+            const result = await getSnowlumaClient().raw('get_group_list', {})
+            res.statusCode = 200
+            res.setHeader('content-type', 'application/json')
+            res.end(JSON.stringify(result))
+          } catch (e) {
+            res.statusCode = 502
+            res.end(JSON.stringify({ error: String(e) }))
+          }
+          return
+        }
         next()
       })
 
-      // Config sync endpoint — SettingsPage writes host/port here
       server.middlewares.use(async (req, res, next) => {
-        if (req.method === 'POST' && req.url === '/__api/napcat-config') {
+        if (req.method === 'GET' && req.url === '/api/snowluma/friend_list') {
+          try {
+            const result = await getSnowlumaClient().raw('get_friend_list', {})
+            res.statusCode = 200
+            res.setHeader('content-type', 'application/json')
+            res.end(JSON.stringify(result))
+          } catch (e) {
+            res.statusCode = 502
+            res.end(JSON.stringify({ error: String(e) }))
+          }
+          return
+        }
+        next()
+      })
+
+      server.middlewares.use(async (req, res, next) => {
+        if (req.method === 'POST' && req.url === '/api/snowluma/group_msg_history') {
           try {
             const body = await rawBody(req)
-            const data = body ? JSON.parse(body.toString()) : {}
-            fs.writeFileSync(NAPCAT_CONFIG_PATH, JSON.stringify({
-              host: data.host || '127.0.0.1',
-              port: Number(data.port) || 3000,
+            const { group_id, count, message_seq } = body ? JSON.parse(body.toString()) : {}
+            const params = message_seq !== undefined ? { group_id, count, message_seq } : { group_id, count }
+            const result = await getSnowlumaClient().raw('get_group_msg_history', params)
+            res.statusCode = 200
+            res.setHeader('content-type', 'application/json')
+            res.end(JSON.stringify(result))
+          } catch (e) {
+            res.statusCode = 502
+            res.end(JSON.stringify({ error: String(e) }))
+          }
+          return
+        }
+        next()
+      })
+
+      server.middlewares.use(async (req, res, next) => {
+        if (req.method === 'POST' && req.url === '/api/snowluma/friend_msg_history') {
+          try {
+            const body = await rawBody(req)
+            const { user_id, count, message_seq } = body ? JSON.parse(body.toString()) : {}
+            const params = message_seq !== undefined ? { user_id, count, message_seq } : { user_id, count }
+            const result = await getSnowlumaClient().raw('get_friend_msg_history', params)
+            res.statusCode = 200
+            res.setHeader('content-type', 'application/json')
+            res.end(JSON.stringify(result))
+          } catch (e) {
+            res.statusCode = 502
+            res.end(JSON.stringify({ error: String(e) }))
+          }
+          return
+        }
+        next()
+      })
+
+      server.middlewares.use(async (req, res, next) => {
+        if (req.method === 'GET' && req.url?.startsWith('/api/snowluma/group_member_list')) {
+          try {
+            const url = new URL(req.url!, 'http://localhost')
+            const groupId = Number(url.searchParams.get('group_id'))
+            const result = await getSnowlumaClient().raw('get_group_member_list', { group_id: groupId })
+            res.statusCode = 200
+            res.setHeader('content-type', 'application/json')
+            res.end(JSON.stringify(result))
+          } catch (e) {
+            res.statusCode = 502
+            res.end(JSON.stringify({ error: String(e) }))
+          }
+          return
+        }
+        next()
+      })
+
+      server.middlewares.use(async (req, res, next) => {
+        if (req.method === 'GET' && req.url === '/api/snowluma/test') {
+          try {
+            await getSnowlumaClient().raw('get_group_list', {})
+            res.statusCode = 200
+            res.setHeader('content-type', 'application/json')
+            res.end(JSON.stringify({ ok: true }))
+          } catch {
+            res.statusCode = 200
+            res.setHeader('content-type', 'application/json')
+            res.end(JSON.stringify({ ok: false }))
+          }
+          return
+        }
+        next()
+      })
+
+      // SnowLuma config endpoint
+      server.middlewares.use(async (req, res, next) => {
+        if (req.method === 'POST' && req.url === '/__api/snowluma-config') {
+          try {
+            const body = await rawBody(req)
+            const { baseUrl, accessToken } = body ? JSON.parse(body.toString()) : {}
+            fs.writeFileSync(SNOWLUMA_CONFIG_PATH, JSON.stringify({
+              baseUrl: baseUrl || 'http://127.0.0.1:3000',
+              accessToken: accessToken || '',
             }, null, 2))
+            snowlumaClient = null
             res.statusCode = 200
             res.setHeader('content-type', 'application/json')
             res.end(JSON.stringify({ ok: true }))

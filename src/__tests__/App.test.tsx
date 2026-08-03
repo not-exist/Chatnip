@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import App from '../App'
 
-vi.mock('@/api/napcat', () => ({
+vi.mock('@/api/snowluma', () => ({
   getGroupList: vi.fn().mockResolvedValue([]),
   getFriendList: vi.fn().mockResolvedValue([]),
   getGroupMemberList: vi.fn().mockResolvedValue([]),
