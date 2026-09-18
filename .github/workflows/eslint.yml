@@ -1,11 +1,21 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-# ESLint is a tool for identifying and reporting on patterns
-# found in ECMAScript/JavaScript code.
-# More details at https://github.com/eslint/eslint
-# and https://eslint.org
+# ESLint code-scanning workflow.
+#
+# More details at https://eslint.org
+#
+# This job runs the repository's OWN ESLint (whatever package.json /
+# package-lock.json pin, installed with `npm ci`) against the flat config in
+# eslint.config.mjs, and publishes the findings to GitHub code scanning as
+# SARIF.
+#
+# The previous revision of this file was broken on every run:
+#   * it installed a hard-coded eslint@8.10.0 next to the project's eslint 10
+#     (an unresolvable peer conflict -> the "Install ESLint" step failed),
+#   * it pointed at .eslintrc.js, which does not exist in this repo,
+#   * it passed --ext, which flat-config ESLint (v9+) removed.
+#
+# Hard enforcement of lint lives in .github/workflows/ci.yml (`npm run lint`,
+# part of the required "CI" check), so the lint step below is allowed to fail
+# without failing this run -- its job is to produce the SARIF report.
 
 name: ESLint
 
@@ -18,10 +28,18 @@ on:
   schedule:
     - cron: '16 6 * * 0'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   eslint:
     name: Run eslint scanning
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
       security-events: write
@@ -30,23 +48,37 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install ESLint
-        run: |
-          npm install eslint@8.10.0
-          npm install @microsoft/eslint-formatter-sarif@3.1.0
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Installed with --no-save on purpose: v3.1.0 still declares a runtime
+      # dependency on eslint@^8, which would drag a deprecated ESLint 8 (plus
+      # rimraf@3 / glob@7 / inflight) into the committed dependency tree.
+      # Keeping it out of package.json keeps `npm ls eslint` on v10 only.
+      - name: Install SARIF formatter
+        run: npm install --no-save @microsoft/eslint-formatter-sarif@3.1.0
 
       - name: Run ESLint
         env:
           SARIF_ESLINT_IGNORE_SUPPRESSED: "true"
-        run: npx eslint .
-          --config .eslintrc.js
-          --ext .js,.jsx,.ts,.tsx
-          --format @microsoft/eslint-formatter-sarif
-          --output-file eslint-results.sarif
+        # No --config / --ext: ESLint 10 discovers eslint.config.mjs (flat
+        # config) and the config itself declares which files to lint.
+        run: npx eslint . --format @microsoft/eslint-formatter-sarif --output-file eslint-results.sarif
         continue-on-error: true
 
+      # Dependabot-triggered pull_request runs get a read-only GITHUB_TOKEN, so
+      # the SARIF upload would 403 there. master pushes and the weekly schedule
+      # still keep code scanning up to date.
       - name: Upload analysis results to GitHub
+        if: github.actor != 'dependabot[bot]'
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: eslint-results.sarif
           wait-for-processing: true
+          category: eslint
