@@ -25,7 +25,6 @@ updates:
       time: "09:00"
       timezone: "Asia/Shanghai"
     # Bound the PR backlog (Dependabot's default is 5).
-    open-pull-requests-limit: 10
     commit-message:
       prefix: "chore(deps)"
       prefix-development: "chore(deps-dev)"
@@ -64,7 +63,6 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Asia/Shanghai"
-    open-pull-requests-limit: 5
     commit-message:
       prefix: "ci(deps)"
     labels:
