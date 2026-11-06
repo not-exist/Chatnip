@@ -1,3 +1,4 @@
+import { apiFetch, apiUrl, getApiToken } from '@/api/runtime'
 import type { ProviderInfo, ModelInfo } from '@/types'
 import type { OpencodeClient } from '@opencode-ai/sdk/client'
 
@@ -8,7 +9,7 @@ export interface FilePartInput {
   url: string
 }
 
-const PROXY_BASE = '/api/opencode'
+const PROXY_PATH = '/api/opencode'
 
 let sdkClient: OpencodeClient | null = null
 
@@ -17,8 +18,14 @@ async function getClient() {
   try {
     const { createOpencodeClient } = await import('@opencode-ai/sdk/client')
     sdkClient = createOpencodeClient({
-      baseUrl: PROXY_BASE,
+      baseUrl: apiUrl(PROXY_PATH),
       throwOnError: true,
+      fetch: (request) => {
+        const headers = new Headers(request.headers)
+        const token = getApiToken()
+        if (token) headers.set('x-chatnip-token', token)
+        return fetch(new Request(request, { headers }))
+      },
     })
     return sdkClient
   } catch {
@@ -118,7 +125,7 @@ export async function testOpencodeConnection(): Promise<boolean> {
 
 export async function restartOpencodeServer(): Promise<{ ok: boolean; error?: string }> {
   try {
-    const res = await fetch('/__api/opencode/restart', { method: 'POST' })
+    const res = await apiFetch('/__api/opencode/restart', { method: 'POST' })
     return await res.json()
   } catch {
     return { ok: false, error: '请求失败' }

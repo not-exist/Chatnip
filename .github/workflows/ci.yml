@@ -22,6 +22,8 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -35,6 +37,8 @@ jobs:
     name: Lint / Typecheck / Build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -44,7 +48,9 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm run typecheck:node
       - run: npm run build
+      - run: npm run build:electron
 
   # Aggregate status check. Branch protection (see docs/BRANCH_PROTECTION.md)
   # requires a check named exactly "CI"; this gate keeps that contract stable

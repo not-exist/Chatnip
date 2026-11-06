@@ -6,6 +6,10 @@ dist/
 .vite/
 tsconfig.tsbuildinfo
 
+# Electron build output
+out/
+release/
+
 # Env & local config
 *.local
 .env

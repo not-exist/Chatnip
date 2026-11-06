@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import Layout from '@/components/Layout'
 import SettingsPage from '@/pages/SettingsPage'
+import SetupPage from '@/pages/SetupPage'
 import ChatListPage from '@/pages/ChatListPage'
 import NewAnalysisPage from '@/pages/NewAnalysisPage'
 import SessionsPage from '@/pages/SessionsPage'
 import SessionDetailPage from '@/pages/SessionDetailPage'
+import { hasCompletedSetup } from '@/lib/firstRun'
 
 // Key by :id so switching between two sessions remounts the page instead of
 // reusing the mounted instance. Without this, per-session refs/state (e.g. the
@@ -19,8 +21,9 @@ export default function Router() {
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
-          <Route path="/" element={<Navigate to="/chats" replace />} />
+          <Route path="/" element={<Navigate to={hasCompletedSetup() ? '/chats' : '/setup'} replace />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/setup" element={<SetupPage />} />
           <Route path="/chats" element={<ChatListPage />} />
           <Route path="/analyze/:type/:id" element={<NewAnalysisPage />} />
           <Route path="/sessions" element={<SessionsPage />} />
