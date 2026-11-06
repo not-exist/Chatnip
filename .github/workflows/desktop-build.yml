@@ -46,6 +46,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Package
+        shell: bash
         env:
           BUILDER_ARGS: ${{ matrix.args }}
         run: npx electron-builder $BUILDER_ARGS --publish never
