@@ -63,7 +63,7 @@ jobs:
           node-version: '24'
           cache: 'npm'
       - run: npm ci
-      - run: npm run test:e2e
+      - run: xvfb-run -a npm run test:e2e
 
   # Aggregate status check. Branch protection (see docs/BRANCH_PROTECTION.md)
   # requires a check named exactly "CI"; this gate keeps that contract stable

@@ -43,7 +43,7 @@ jobs:
       - run: npm run build:electron
       - name: Run Electron E2E (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
-        run: npm run test:e2e
+        run: xvfb-run -a npm run test:e2e
       - name: Generate opencode manifest
         run: node scripts/gen-opencode-manifest.mjs
         env:
