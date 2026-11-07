@@ -13,11 +13,20 @@ import { useOpencode } from '@/hooks/useOpencode'
 import { buildUserPrompt, getSystemPrompt, getFeaturePrompts, formatMessages } from '@/prompts/analysis'
 import { listProviders } from '@/api/opencode'
 import { writeChatFile, cleanupChatHistory } from '@/api/fileWriter'
+import { fetchAllHistory } from '@/lib/historyPager'
+import { groupByLocalDate } from '@/lib/dateGroups'
 import type { ChatType, ProviderInfo, ModelInfo } from '@/types'
 import type { DateRange } from 'react-day-picker'
 
 const BATCH_SIZE = 1000
 const MAX_BATCHES = 20
+
+function createAnalysisId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return `a${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`
+}
 
 export default function NewAnalysisPage() {
   const { type, id } = useParams<{ type: ChatType; id: string }>()
@@ -109,47 +118,21 @@ export default function NewAnalysisPage() {
 
     setLoading(true)
     setStatus('正在拉取聊天记录...')
+    const analysisId = createAnalysisId()
 
     try {
-      const allMessages: Array<{
-        message_id: number
-        user_id: number
-        nickname?: string
-        time: number
-        message: unknown
-      }> = []
-      let lastMessageSeq: number | undefined
-      let batchCount = 0
-      let covered = false
+      const fetchPage = (anchor?: number) =>
+        chatType === 'group'
+          ? getGroupMsgHistory(chatId, BATCH_SIZE, anchor)
+          : getFriendMsgHistory(chatId, BATCH_SIZE, anchor)
 
-      while (batchCount < MAX_BATCHES && !covered) {
-        batchCount++
-        setStatus(`正在拉取第 ${batchCount} 批聊天记录...`)
+      const history = await fetchAllHistory(fetchPage, {
+        batchSize: BATCH_SIZE,
+        maxBatches: MAX_BATCHES,
+        rangeFrom: rangeFrom.getTime(),
+      })
 
-        const history =
-          chatType === 'group'
-            ? await getGroupMsgHistory(chatId, BATCH_SIZE, lastMessageSeq)
-            : await getFriendMsgHistory(chatId, BATCH_SIZE, lastMessageSeq)
-
-        const batch = history?.messages || []
-
-        if (batch.length === 0) break
-
-        for (const msg of batch) {
-          allMessages.push(msg)
-        }
-
-        const oldestInBatch = batch[batch.length - 1]
-        if (oldestInBatch.time * 1000 <= rangeFrom.getTime()) {
-          covered = true
-        } else if (batch.length < BATCH_SIZE) {
-          covered = true
-        } else {
-          lastMessageSeq = oldestInBatch.message_id
-        }
-      }
-
-      const filtered = allMessages.filter((m) => {
+      const filtered = history.messages.filter((m) => {
         const t = m.time * 1000
         return t >= rangeFrom.getTime() && t <= rangeTo.getTime()
       })
@@ -160,20 +143,16 @@ export default function NewAnalysisPage() {
         return
       }
 
-      if (batchCount >= MAX_BATCHES && !covered) {
-        toast('已拉取最近 20000 条消息，可能未完整覆盖所选日期范围', { icon: '⚠️' })
+      if (history.stopReason === 'max-batches') {
+        toast(`已拉取 ${history.batches} 批消息，可能未完整覆盖所选日期范围`, { icon: '⚠️' })
+      } else if (history.stopReason === 'anchor-stalled') {
+        toast('历史消息翻页未推进，已停止拉取，结果可能不完整', { icon: '⚠️' })
       }
 
       const dateFrom = rangeFrom.toLocaleDateString('zh-CN')
       const dateTo = rangeTo.toLocaleDateString('zh-CN')
 
-      const groups = new Map<string, typeof filtered>()
-      for (const msg of filtered) {
-        const dateKey = new Date(msg.time * 1000).toISOString().slice(0, 10)
-        if (!groups.has(dateKey)) groups.set(dateKey, [])
-        groups.get(dateKey)!.push(msg)
-      }
-
+      const groups = groupByLocalDate(filtered)
       const sortedDates = [...groups.keys()].sort()
       setStatus(`正在写入 ${sortedDates.length} 个临时文件...`)
 
@@ -182,7 +161,7 @@ export default function NewAnalysisPage() {
           const msgs = groups.get(dateKey)!
           const text = formatMessages(msgs)
           const filename = `chat-${dateKey}.txt`
-          const url = await writeChatFile(filename, text)
+          const url = await writeChatFile(analysisId, filename, text)
           return { type: 'file' as const, mime: 'text/plain', filename, url }
         })
       )
@@ -233,7 +212,7 @@ export default function NewAnalysisPage() {
     } finally {
       setLoading(false)
       setStatus('')
-      cleanupChatHistory().catch(() => {})
+      cleanupChatHistory(analysisId).catch(() => {})
     }
   }
 

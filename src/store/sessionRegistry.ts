@@ -15,28 +15,31 @@ function isValidSessionRecord(v: unknown): v is SessionInfo {
     && typeof r.createdAt === 'number' && !Number.isNaN(r.createdAt)
 }
 
+export function sanitizeSessions(raw: unknown): Record<string, SessionInfo> {
+  if (typeof raw !== 'object' || raw === null) return {}
+  const clean: Record<string, SessionInfo> = {}
+  for (const [key, value] of Object.entries(raw)) {
+    if (isValidSessionRecord(value)) {
+      clean[key] = value
+    }
+  }
+  return clean
+}
+
 function load(): Record<string, SessionInfo> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
-      const parsed = JSON.parse(raw)
-      if (typeof parsed === 'object' && parsed !== null) {
-        const clean: Record<string, SessionInfo> = {}
-        for (const [key, value] of Object.entries(parsed)) {
-          if (isValidSessionRecord(value)) {
-            clean[key] = value
-          }
-          // silently drop invalid records
-        }
-        return clean
-      }
+      return sanitizeSessions(JSON.parse(raw))
     }
   } catch { /* ignore */ }
   return {}
 }
 
 function persist(records: Record<string, SessionInfo>) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(records))
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records))
+  } catch { /* storage may be unavailable */ }
   saveAppState('sessions', records).catch(() => {})
 }
 

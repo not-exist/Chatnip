@@ -19,7 +19,7 @@ export default tseslint.config(
     files: ['**/*.{tsx,jsx}'],
   },
   {
-    ignores: ['dist/', 'node_modules/', '.playwright-mcp/'],
+    ignores: ['dist/', 'out/', 'release/', 'node_modules/', '.playwright-mcp/'],
   },
   {
     files: ['scripts/**'],
@@ -28,6 +28,17 @@ export default tseslint.config(
         console: 'readonly',
         process: 'readonly',
         URL: 'readonly',
+        fetch: 'readonly',
+      },
+    },
+  },
+  {
+    files: ['electron/**/*.ts', 'electron.vite.config.ts'],
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        __dirname: 'readonly',
       },
     },
   },

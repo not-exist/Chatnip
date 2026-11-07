@@ -1,23 +1,24 @@
 import { useEffect, useState } from 'react'
 import { Card, Input, Button, Separator, Select, ListBox, Spinner } from '@heroui/react'
-import { FiServer, FiCpu, FiSettings, FiCheckCircle } from 'react-icons/fi'
+import { FiServer, FiCpu, FiSettings, FiCheckCircle, FiExternalLink } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { useAppSelector, useAppDispatch } from '@/store'
 import {
   setNapcatConfig,
-  setOpencodeConfig,
   setDefaultFeatures,
   setDefaultModel,
 } from '@/store/settingsSlice'
 import AnalysisFeatureSelector from '@/components/AnalysisFeatureSelector'
 import SectionHeader from '@/components/SectionHeader'
+import ServiceStatusCard from '@/components/ServiceStatusCard'
+import { apiFetch, getBridge } from '@/api/runtime'
 import { testConnection as testNapcat } from '@/api/napcat'
 import { testOpencodeConnection, listProviders, restartOpencodeServer } from '@/api/opencode'
 import type { ProviderInfo } from '@/types'
 
 export default function SettingsPage() {
   const dispatch = useAppDispatch()
-  const { napcat, opencode, defaultFeatures, defaultModel } = useAppSelector(
+  const { napcat, defaultFeatures, defaultModel } = useAppSelector(
     (s) => s.settings,
   )
   const [providers, setProviders] = useState<ProviderInfo[]>([])
@@ -27,14 +28,17 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetch('/__api/napcat-config', {
+      apiFetch('/__api/napcat-config', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ host: napcat.host, port: napcat.port }),
+        body: JSON.stringify({
+          baseUrl: `http://${napcat.host}:${napcat.port}`,
+          accessToken: napcat.token || undefined,
+        }),
       }).catch(() => {})
     }, 800)
     return () => clearTimeout(timer)
-  }, [napcat.host, napcat.port])
+  }, [napcat.host, napcat.port, napcat.token])
 
   useEffect(() => {
     listProviders()
@@ -102,6 +106,8 @@ export default function SettingsPage() {
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">配置 NapCat 与 Opencode 连接</p>
       </div>
 
+      <ServiceStatusCard />
+
       <Card className="border border-gray-200/60 dark:border-white/10 shadow-sm transition-all duration-200 hover:border-gray-300 dark:hover:border-white/20 hover:shadow-md hover:-translate-y-px">
         <SectionHeader icon={FiServer} title="NapCat 连接配置" variant="primary" />
         <Separator />
@@ -148,6 +154,17 @@ export default function SettingsPage() {
             <FiCheckCircle className="mr-2" />
             测试连接
           </Button>
+          <Button
+            variant="secondary"
+            onPress={async () => {
+              const result = await getBridge()?.openQqWebUi()
+              if (result && !result.ok) toast.error(result.error || '打开失败')
+            }}
+            className="rounded-xl"
+          >
+            <FiExternalLink className="mr-2" />
+            打开 NapCat WebUI
+          </Button>
         </Card.Content>
       </Card>
 
@@ -156,31 +173,8 @@ export default function SettingsPage() {
         <Separator />
         <Card.Content className="space-y-4 py-4">
           <p className="text-sm text-gray-500">
-            opencode serve 随 Vite 自动启动，通过代理连接（端口 4096）
+            Opencode 由应用自动管理（固定 1.19.5 版本）。安装、启动与健康检查由主进程负责；可在上方“服务状态”中查看或重启。
           </p>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label htmlFor="opencode-host" className="text-sm font-medium text-gray-700 dark:text-gray-300">主机地址</label>
-              <Input
-                id="opencode-host"
-                value={opencode.host}
-                onChange={(e) => dispatch(setOpencodeConfig({ host: e.target.value }))}
-                placeholder="127.0.0.1"
-                className="rounded-xl"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label htmlFor="opencode-port" className="text-sm font-medium text-gray-700 dark:text-gray-300">端口</label>
-              <Input
-                id="opencode-port"
-                type="number"
-                value={String(opencode.port)}
-                onChange={(e) => dispatch(setOpencodeConfig({ port: Number(e.target.value) || 4096 }))}
-                placeholder="4096"
-                className="rounded-xl"
-              />
-            </div>
-          </div>
           <Button
             variant="tertiary"
             onPress={handleTestOpencode}

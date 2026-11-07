@@ -42,21 +42,18 @@ export function useOpencode() {
   const listSessions = useCallback(async (): Promise<SessionInfo[]> => {
     const remoteSessions = (await opencodeApi.listSessions()) ?? []
     const registry = getRegisteredSessions()
-    const remoteMap = new Map(remoteSessions.map((s) => [s.id, s]))
-    return Object.values(registry)
-      .filter((r) => remoteMap.has(r.id))
-      .map((r) => {
-        const remote = remoteMap.get(r.id)!
-        return {
-          id: r.id,
-          title: remote.title || r.title,
-          createdAt: remote.time?.created || r.createdAt,
-          chatType: r.chatType,
-          chatId: r.chatId,
-          chatName: r.chatName,
-          features: r.features,
-        }
-      })
+    return remoteSessions.map((remote) => {
+      const registered = registry[remote.id]
+      return {
+        id: remote.id,
+        title: remote.title || registered?.title || '未命名会话',
+        createdAt: remote.time?.created || registered?.createdAt || Date.now(),
+        chatType: registered?.chatType ?? 'group',
+        chatId: registered?.chatId ?? 0,
+        chatName: registered?.chatName ?? '',
+        features: registered?.features ?? [],
+      }
+    })
   }, [])
 
   const getMessages = useCallback(

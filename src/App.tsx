@@ -2,6 +2,7 @@ import { Provider } from 'react-redux'
 import { Toaster } from 'react-hot-toast'
 import { store } from '@/store'
 import Router from '@/router'
+import ErrorBoundary from '@/components/ErrorBoundary'
 
 export default function App() {
   return (
@@ -12,7 +13,9 @@ export default function App() {
             className: '!bg-white dark:!bg-gray-950 !text-gray-900 dark:!text-gray-100 !border !border-gray-200 dark:!border-gray-700',
           }}
         />
-        <Router />
+        <ErrorBoundary>
+          <Router />
+        </ErrorBoundary>
     </Provider>
   )
 }
