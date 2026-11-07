@@ -49,5 +49,9 @@ Thumbs.db
 Desktop.ini
 .DS_Store
 
+# Test artifacts
+test-results/
+playwright-report/
+
 # SARIF output from the ESLint code-scanning workflow
 eslint-results.sarif

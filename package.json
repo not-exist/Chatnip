@@ -15,7 +15,8 @@
     "dev:electron": "electron-vite dev",
     "build:electron": "electron-vite build",
     "start:electron": "electron .",
-    "typecheck:node": "tsc -p tsconfig.node.json"
+    "typecheck:node": "tsc -p tsconfig.node.json",
+    "test:e2e": "npm run build:electron && playwright test"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.6",
@@ -29,6 +30,7 @@
     "@heroui/react": "^3.2.1",
     "@heroui/styles": "^3.2.1",
     "@opencode-ai/sdk": "1.19.5",
+    "@playwright/test": "^1.56.1",
     "@reduxjs/toolkit": "^2.5.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@tailwindcss/typography": "^0.5.16",
