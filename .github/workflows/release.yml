@@ -48,7 +48,7 @@ jobs:
         env:
           BUILDER_ARGS: ${{ matrix.args }}
         run: npx electron-builder $BUILDER_ARGS --publish never
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-${{ matrix.os }}
           path: release/**
